@@ -19,7 +19,8 @@
 ## Workflow and validation
 
 - Read and address every requirement in a task; preserve unrelated work. Do not substitute placeholders for requested functionality or report incomplete work as complete.
-- Build with `./gradlew build` (Windows: `gradlew.bat build`) and run `./gradlew runGameTestServer` for relevant changes. Use `-PosmiumGameTest` and `-PemptyTagGameTest` in separate runs for the optional-resource fixtures; never use these properties for release builds.
+- Keep GameTest code and shared test structures in `src/gameTest`, and optional fixture data in `src/osmiumTest` or `src/emptyTagTest`; none belongs in the production JAR.
+- Build with `./gradlew build` (Windows: `gradlew.bat build`) and run `./gradlew runGameTestServer` for relevant changes. Use `-PosmiumGameTest` and `-PemptyTagGameTest` in separate runs for the optional-resource fixtures.
 - Review changes for regressions, fix introduced build/test failures, and update relevant documentation. Explain genuine blockers precisely.
 - Provide an in-game/manual checklist when applicable. Distinguish automated, manual and untested behavior; never claim runtime verification that was not performed.
 - NeoForge documentation: https://docs.neoforged.net/docs/1.21.1/

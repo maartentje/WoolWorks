@@ -11,8 +11,9 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 
 - Install compatible material-providing mods and check their supported materials and tags; no particular external mod is required.
 - Install multiple mods supplying the same material tag; check there is one resource type and extraction consistently chooses the same output.
-- Automated standalone checks: `gradlew runGameTestServer`; repeat with `gradlew -PosmiumGameTest runGameTestServer` to load test-only tags containing copper and iron ingots for the optional catalogue. Do not use the test property for release builds.
-- Run `gradlew -PemptyTagGameTest runGameTestServer` separately to check an explicitly empty salt tag. Do not combine test properties or use them for release builds.
+- Automated standalone checks: `gradlew runGameTestServer`; repeat with `gradlew -PosmiumGameTest runGameTestServer` to load test-only tags containing copper and iron ingots for the optional catalogue.
+- Run `gradlew -PemptyTagGameTest runGameTestServer` separately to check an explicitly empty salt tag. Do not combine test properties: both fixtures define the salt tag.
+- GameTest code and the test structure are in `src/gameTest`; optional fixtures are in `src/osmiumTest` and `src/emptyTagTest`. ModDevGradle attaches these to development runs, not the production JAR. Fixture properties affect GameTest resources only and do not add them to the production JAR.
 - Restart the server and reconnect clients after changing resource definitions, tags, or resource configuration. Live datapack reload and client display refresh have not been verified.
 
 ## Datapacks
