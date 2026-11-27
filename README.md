@@ -34,9 +34,10 @@ Use Java 21 and import the project as a Gradle project. On Windows:
 .\gradlew.bat build
 .\gradlew.bat runClient
 .\gradlew.bat runServer
+.\gradlew.bat runGameTestServer
 ```
 
-On macOS/Linux use `./gradlew`. The built JAR is in `build/libs/`. See the [NeoForge 1.21.1 documentation](https://docs.neoforged.net/docs/1.21.1/) and the [Mojang mappings license](https://github.com/NeoForged/NeoForm/blob/main/Mojang.md).
+On macOS/Linux use `./gradlew`. The built JAR is in `build/libs/`. GameTest sources and structures are development-only; see `docs/testing.md` for optional fixture runs. See the [NeoForge 1.21.1 documentation](https://docs.neoforged.net/docs/1.21.1/) and the [Mojang mappings license](https://github.com/NeoForged/NeoForm/blob/main/Mojang.md).
 
 JEI is added only to the development client, not bundled or required by the mod. JEI discovers variants from the creative tab, and the optional integration identifies them by their resource component. The development server does not include JEI. A normal installation can run with or without it.
 
