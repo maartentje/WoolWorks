@@ -2,6 +2,8 @@
 
 All notable changes to Wool Works will be documented in this file.
 
+## [Unreleased]
+
 ## [0.1.0-alpha.1]
 
 Initial public alpha release for Minecraft 1.21.1 (NeoForge).

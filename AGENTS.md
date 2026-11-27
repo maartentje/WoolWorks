@@ -24,3 +24,4 @@
 - Review changes for regressions, fix introduced build/test failures, and update relevant documentation. Explain genuine blockers precisely.
 - Provide an in-game/manual checklist when applicable. Distinguish automated, manual and untested behavior; never claim runtime verification that was not performed.
 - NeoForge documentation: https://docs.neoforged.net/docs/1.21.1/
+- Keep CHANGELOG.md up to date with player-facing changes, bug fixes, balancing adjustments, compatibility changes and modpack customization changes. Add entries under an Unreleased section until the next release. Do not create changelog entries for internal refactoring, test-only changes or minor documentation updates. Do not modify previously released changelog entries unless correcting inaccurate information.
