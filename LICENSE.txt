@@ -1,0 +1,24 @@
+Wool Works
+Copyright (c) 2026 maartentje
+All Rights Reserved.
+
+Permission is granted to:
+
+- Download, install and play Wool Works free of charge.
+- Use Wool Works on private and public Minecraft servers.
+- Include unmodified official releases of Wool Works in modpacks, provided that appropriate credit is given and all existing copyright notices are preserved.
+- Create and distribute datapacks, configuration files, KubeJS scripts and compatibility integrations for Wool Works, provided they do not redistribute proprietary Wool Works code or assets.
+
+Without prior written permission from the copyright holder, you may not:
+
+- Redistribute Wool Works independently of an authorized modpack.
+- Publish modified versions of Wool Works.
+- Copy or reuse its proprietary source code, textures, models, branding or other assets in another project.
+- Sell Wool Works or charge specifically for access to the mod.
+
+All rights not expressly granted are reserved, subject to applicable law and the terms of the hosting platform.
+
+Third-party components remain subject to their respective licenses.
+
+Official project repository:
+https://github.com/maartentje/WoolWorks
