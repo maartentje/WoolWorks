@@ -120,6 +120,7 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
     private boolean tickServer(Level level) {
         dropRecovered();
         var input = inventory.getStackInSlot(0);
+        if (input.isEmpty()) { resetProgress(); recipeEnergy = 0; oversizedOutput = false; return false; }
         var match = level.getRecipeManager().getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(input), level);
         if (match.isEmpty()) { resetProgress(); recipeEnergy = 0; oversizedOutput = false; return false; }
         var holder = match.get();

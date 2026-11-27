@@ -36,6 +36,40 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class MachineRecipeGameTests {
     private MachineRecipeGameTests() {}
 
+    @GameTest(template = "empty")
+    public static void extractorIdleToProcessing(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var pos = helper.absolutePos(BlockPos.ZERO);
+        level.setBlockAndUpdate(pos, ModMachines.EXTRACTOR.get().defaultBlockState());
+        var extractor = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
+        extractor.energy().receiveEnergy(10000, false);
+        be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
+        if (extractor.isProcessing() || extractor.energy().getEnergyStored() != 10000 || extractor.menuData().get(2) != 0
+                || extractor.menuData().get(6) != 0 || level.getBlockState(pos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)) {
+            helper.fail("Empty extractor did not remain idle"); return;
+        }
+        var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.parse("woolworks:iron"));
+        extractor.inventory().setStackInSlot(0, wool.copy());
+        be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
+        if (!extractor.isProcessing() || extractor.energy().getEnergyStored() != 9960 || extractor.remainingTicks() != 199
+                || !level.getBlockState(pos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)) {
+            helper.fail("Extractor did not start after input insertion"); return;
+        }
+        extractor.inventory().setStackInSlot(0, ItemStack.EMPTY);
+        be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
+        if (extractor.isProcessing() || extractor.remainingTicks() != 0 || extractor.energy().getEnergyStored() != 9960
+                || extractor.menuData().get(1) != 0 || extractor.menuData().get(2) != 0 || extractor.menuData().get(6) != 0
+                || level.getBlockState(pos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)) {
+            helper.fail("Removing input did not reset the extractor"); return;
+        }
+        extractor.inventory().setStackInSlot(0, wool.copy());
+        for (int i = 0; i < 200; i++) be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
+        if (!extractor.inventory().getStackInSlot(1).is(Items.IRON_INGOT) || extractor.inventory().getStackInSlot(1).getCount() != 1) {
+            helper.fail("Extractor did not complete after input was reinserted"); return;
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", batch = "resource_missing_tag")
     public static void unavailableTagSheepConversion(GameTestHelper helper) {
         var level = helper.getLevel();
