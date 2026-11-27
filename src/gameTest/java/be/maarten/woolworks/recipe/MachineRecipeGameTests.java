@@ -37,6 +37,86 @@ public final class MachineRecipeGameTests {
     private MachineRecipeGameTests() {}
 
     @GameTest(template = "empty")
+    public static void cableArmModelDirections(GameTestHelper helper) throws java.io.IOException {
+        var loader = WoolWorks.class.getClassLoader();
+        try (var blockstate = loader.getResourceAsStream("assets/woolworks/blockstates/wool_insulated_cable.json");
+             var model = loader.getResourceAsStream("assets/woolworks/models/block/cable_arm.json")) {
+            if (blockstate == null || model == null) { helper.fail("Cable model resources missing"); return; }
+            var parts = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(blockstate, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonArray("multipart");
+            var element = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(model, java.nio.charset.StandardCharsets.UTF_8))
+                    .getAsJsonObject().getAsJsonArray("elements").get(0).getAsJsonObject();
+            var from = element.getAsJsonArray("from"); var to = element.getAsJsonArray("to");
+            var base = new org.joml.Vector3f((from.get(0).getAsFloat() + to.get(0).getAsFloat()) / 2 - 8,
+                    (from.get(1).getAsFloat() + to.get(1).getAsFloat()) / 2 - 8,
+                    (from.get(2).getAsFloat() + to.get(2).getAsFloat()) / 2 - 8).normalize();
+            var rotations = new java.util.EnumMap<Direction, org.joml.Vector3f>(Direction.class);
+            int cores = 0;
+            for (var part : parts) {
+                var obj = part.getAsJsonObject(); var apply = obj.getAsJsonObject("apply");
+                if (!obj.has("when")) { if (!"woolworks:block/cable_core".equals(apply.get("model").getAsString())) { helper.fail("Unexpected unconditional cable model"); return; } cores++; continue; }
+                var when = obj.getAsJsonObject("when");
+                if (when.size() != 1 || !"woolworks:block/cable_arm".equals(apply.get("model").getAsString())) { helper.fail("Unexpected cable multipart entry"); return; }
+                var condition = when.entrySet().iterator().next();
+                Direction side = Direction.byName(condition.getKey());
+                if (side == null || !condition.getValue().getAsBoolean() || rotations.containsKey(side)) { helper.fail("Invalid cable side condition"); return; }
+                int x = apply.has("x") ? apply.get("x").getAsInt() : 0;
+                int y = apply.has("y") ? apply.get("y").getAsInt() : 0;
+                // BlockModelRotation applies negative X and Y angles, around the block center.
+                var rotated = new org.joml.Vector3f(base).rotate(new org.joml.Quaternionf().rotateYXZ(-y * net.minecraft.util.Mth.DEG_TO_RAD, -x * net.minecraft.util.Mth.DEG_TO_RAD, 0));
+                rotations.put(side, rotated);
+                if (rotated.distance(side.getStepX(), side.getStepY(), side.getStepZ()) > 0.0001f) { helper.fail("Cable arm points away from " + side); return; }
+            }
+            if (cores != 1 || rotations.size() != 6) { helper.fail("Cable multipart models are incomplete"); return; }
+            for (int mask = 0; mask < 64; mask++) {
+                int arms = 0;
+                for (Direction side : Direction.values()) if ((mask & (1 << side.ordinal())) != 0 && rotations.containsKey(side)) arms++;
+                if (arms != Integer.bitCount(mask)) { helper.fail("Cable multipart combination missing an arm: " + mask); return; }
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void cableConnectionsAllDirections(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var pos = helper.absolutePos(new BlockPos(1, 2, 1));
+        level.setBlockAndUpdate(pos, ModMachines.CABLE.get().defaultBlockState());
+        for (var neighbor : List.of(ModMachines.GENERATOR.get().defaultBlockState(), ModMachines.EXTRACTOR.get().defaultBlockState(), ModMachines.CABLE.get().defaultBlockState())) {
+            for (Direction side : Direction.values()) {
+                level.setBlockAndUpdate(pos.relative(side), neighbor);
+                for (Direction checked : Direction.values()) {
+                    if (level.getBlockState(pos).getValue(cableDirectionProperty(checked)) != (checked == side)) {
+                        helper.fail("Incorrect cable connection for " + neighbor + " on " + side + ": " + checked); return;
+                    }
+                }
+                level.setBlockAndUpdate(pos.relative(side), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            }
+        }
+        for (Direction side : Direction.values()) level.setBlockAndUpdate(pos.relative(side), ModMachines.GENERATOR.get().defaultBlockState());
+        var cable = (CableBlockEntity) level.getBlockEntity(pos);
+        ModMachines.CABLE.get().setPlacedBy(level, pos, level.getBlockState(pos), null, new ItemStack(ModMachines.CABLE_ITEM.get()));
+        for (Direction side : Direction.values()) {
+            if (!level.getBlockState(pos).getValue(cableDirectionProperty(side)) || !cable.isExtracting(side)) { helper.fail("Missing multi-sided connection or extraction side: " + side); return; }
+        }
+        cable.setExtracting(Direction.DOWN, false);
+        var restored = new CableBlockEntity(pos, level.getBlockState(pos));
+        restored.loadCustomOnly(cable.saveCustomOnly(level.registryAccess()), level.registryAccess());
+        if (restored.isExtracting(Direction.DOWN) || !restored.isExtracting(Direction.UP)) { helper.fail("Manual vertical extraction setting did not persist"); return; }
+        helper.succeed();
+    }
+
+    private static net.minecraft.world.level.block.state.properties.BooleanProperty cableDirectionProperty(Direction direction) {
+        return switch (direction) {
+            case DOWN -> be.maarten.woolworks.machine.CableBlock.DOWN;
+            case UP -> be.maarten.woolworks.machine.CableBlock.UP;
+            case NORTH -> be.maarten.woolworks.machine.CableBlock.NORTH;
+            case SOUTH -> be.maarten.woolworks.machine.CableBlock.SOUTH;
+            case WEST -> be.maarten.woolworks.machine.CableBlock.WEST;
+            case EAST -> be.maarten.woolworks.machine.CableBlock.EAST;
+        };
+    }
+
+    @GameTest(template = "empty")
     public static void extractorIdleToProcessing(GameTestHelper helper) {
         var level = helper.getLevel();
         var pos = helper.absolutePos(BlockPos.ZERO);

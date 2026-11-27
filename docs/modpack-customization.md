@@ -129,6 +129,10 @@ The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also s
 
 ## Other machine configuration and recipes
 
+![A Wool Extractor and Wool Generator linked by insulated cable with hoppers for wool processing](images/wool-processing.png)
+
+*A wool-processing setup using an Extractor and Generator.*
+
 The world server config `serverconfig/woolworks-server.toml` also provides `cableTransferRate` (default 160 FE/t per cable segment), `woolWorkerOperationInterval` (200 ticks), `woolWorkerRegrowthEnergyCost` (400 FE), `woolWorkerShearingEnergyCost` (200 FE), `woolWorkerWheatCost` (1) and `woolWorkerShearsDurabilityCost` (0). Existing config files retain their saved values. Worker energy costs are capped at its 20,000 FE capacity. Check the server log for the effective config path when a development or host setup provides an override. Server configuration is synchronized to connected clients.
 
 Generator fuel recipes use `woolworks:generator_fuel` with `ingredient`, `burn_ticks` and `energy_per_tick`; `required_resource` and `absent_resource` are optional availability checks. Fuel must be valid Infused Wool. The default `woolworks:generator/infused_wool` recipe supplies 400 ticks at 40 FE/t; matching custom fuel recipes take precedence over that default. Extraction recipes support `required_resource`; their duration and FE/t are datapack fields. Speed upgrades keep configured FE/t, whereas Overdrive multiplies FE/t and output; extraction pauses if the output cannot fit.

@@ -4,6 +4,10 @@ All notable changes to Wool Works will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed vertical Wool Insulated Cable arms pointing away from their connections.
+
 ## [0.1.0-alpha.1]
 
 Initial public alpha release for Minecraft 1.21.1 (NeoForge).

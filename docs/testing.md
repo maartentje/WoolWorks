@@ -18,6 +18,7 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 - Install up to eight Speed or two Overdrive Upgrades; check speed, output and FE usage, mixing rejection, manual-only upgrade slots and progress reset after changing upgrades. JEI should show base recipe values.
 - Check empty input ghost suggestions and tooltips without allowing them to change inventory contents.
 - Exercise cable networks with branches, loops, chunk boundaries, placement and removal. Test configured transfer limits, extract-only and bidirectional endpoints, shears toggling, persisted connection state and cable pickup in survival, creative and full inventories.
+- Inspect cable arms and extraction indicators on all six sides, including a cable above a generator and multi-sided junctions. Repeat with the `SQUARE` and `LINE` client indicator styles, connecting cables to each other, Wool Works machines and an external FE block.
 - Test both cable recipes with shears, including shift-crafting, durability, unbreakable shears and retained components. Check speed upgrades reject ordinary wool and unavailable resource variants.
 - Place Workers in all directions; check area cycling and the shears-toggle outline. Test shearing and wheat regrowth independently, output-full and energy pauses, babies, resource and vanilla sheep, all-sided automation, configured durability and save/reload.
 - Test the Woolly Muffler in both hands on all machines, including modes, save/reload, manual versus automatic shearing sounds, overlapping Worker areas and unrelated sounds.
