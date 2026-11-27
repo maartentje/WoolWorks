@@ -6,6 +6,21 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 
 - Run Wool Works without other mods; check existing vanilla resources, feed recipes, sheep transformation, shearing, generator and extractor operation, and item automation.
 - Confirm unavailable optional materials do not appear in the creative tab, JEI, or machine ghost slots.
+- Craft Iron Feed with wheat and an iron ingot. Use it on an adult vanilla sheep; babies and existing Resource Sheep should not transform. Check its tinted fleece and normal nameplate behavior, including a name tag.
+- Shear the sheep, check Infused Wool, shears durability and regrowth after grazing, then save and reopen the world. Check item tint and appearance in inventories, hands, item frames and as a drop; test invisibility and glowing on the sheep.
+- Test vanilla and modded resource variants, custom datapack variants, and invalid IDs. Confirm different resources do not stack together and resource-independent advancements work.
+- Check the Mods menu's client settings and resource editor in an unpublished singleplayer world. Test Done, Cancel and resource restrictions.
+
+## Machines and upgrades
+
+- Insert valid and invalid Infused Wool into a generator; check FE output, light, progress, full-buffer pauses, item automation and any migrated remainder.
+- Extract iron wool with a hopper or pipe on each side. Check progress, energy use, idle and paused states, output blocking and persistence after reload.
+- Install up to eight Speed or two Overdrive Upgrades; check speed, output and FE usage, mixing rejection, manual-only upgrade slots and progress reset after changing upgrades. JEI should show base recipe values.
+- Check empty input ghost suggestions and tooltips without allowing them to change inventory contents.
+- Exercise cable networks with branches, loops, chunk boundaries, placement and removal. Test configured transfer limits, extract-only and bidirectional endpoints, shears toggling, persisted connection state and cable pickup in survival, creative and full inventories.
+- Test both cable recipes with shears, including shift-crafting, durability, unbreakable shears and retained components. Check speed upgrades reject ordinary wool and unavailable resource variants.
+- Place Workers in all directions; check area cycling and the shears-toggle outline. Test shearing and wheat regrowth independently, output-full and energy pauses, babies, resource and vanilla sheep, all-sided automation, configured durability and save/reload.
+- Test the Woolly Muffler in both hands on all machines, including modes, save/reload, manual versus automatic shearing sounds, overlapping Worker areas and unrelated sounds.
 
 ## Modded resources
 

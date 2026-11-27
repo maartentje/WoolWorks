@@ -14,7 +14,7 @@
 - Recipes are normal datapack resources with stable IDs and may be replaced independently by datapacks or KubeJS. Do not overwrite external recipe changes through late generation.
 - Preserve saved entities, components, inventories, machine progress and existing IDs unless a migration is explicitly required. Invalid Resource Sheep are permanently converted to vanilla sheep on server load; do not convert before authoritative resources are ready.
 - Avoid per-tick world scans, forced chunk loads and unnecessary inventory synchronization. Preserve existing caching and invalidation behavior when making related changes.
-- See `docs/modpack-customization.md`, `docs/testing.md` and `examples/README.md` for formats, configuration and compatibility scenarios.
+- See `docs/modpack-customization.md`, `docs/development.md`, `docs/testing.md` and `examples/README.md` for formats, configuration and compatibility scenarios.
 
 ## Workflow and validation
 
@@ -22,6 +22,7 @@
 - Keep GameTest code and shared test structures in `src/gameTest`, and optional fixture data in `src/osmiumTest` or `src/emptyTagTest`; none belongs in the production JAR.
 - Build with `./gradlew build` (Windows: `gradlew.bat build`) and run `./gradlew runGameTestServer` for relevant changes. Use `-PosmiumGameTest` and `-PemptyTagGameTest` in separate runs for the optional-resource fixtures.
 - Review changes for regressions, fix introduced build/test failures, and update relevant documentation. Explain genuine blockers precisely.
+- Update the appropriate player, modpack author or developer documentation whenever features, configuration, customization or development workflows change.
 - Provide an in-game/manual checklist when applicable. Distinguish automated, manual and untested behavior; never claim runtime verification that was not performed.
 - NeoForge documentation: https://docs.neoforged.net/docs/1.21.1/
 - Keep CHANGELOG.md up to date with player-facing changes, bug fixes, balancing adjustments, compatibility changes and modpack customization changes. Add entries under an Unreleased section until the next release. Do not create changelog entries for internal refactoring, test-only changes or minor documentation updates. Do not modify previously released changelog entries unless correcting inaccurate information.
