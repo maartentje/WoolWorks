@@ -1,0 +1,1 @@
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:diamond","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:diamond"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:diamond"}}}}

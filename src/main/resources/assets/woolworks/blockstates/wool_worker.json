@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"woolworks:block/wool_worker"},"facing=east":{"model":"woolworks:block/wool_worker","y":90},"facing=south":{"model":"woolworks:block/wool_worker","y":180},"facing=west":{"model":"woolworks:block/wool_worker","y":270}}}

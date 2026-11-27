@@ -1,0 +1,1 @@
+{"type":"woolworks:resource_conditional_crafting","reusable_shears":true,"recipe":{"ingredients":[{"tag":"minecraft:wool"},{"item":"minecraft:copper_ingot"},{"item":"minecraft:shears"}],"result":{"id":"woolworks:wool_insulated_cable","count":4}}}

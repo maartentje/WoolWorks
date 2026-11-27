@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","pattern":["III","IFI","WWW"],"key":{"I":{"item":"minecraft:iron_ingot"},"F":{"item":"minecraft:furnace"},"W":{"tag":"minecraft:wool"}},"result":{"id":"woolworks:wool_generator","count":1}}

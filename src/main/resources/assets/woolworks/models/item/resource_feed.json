@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "woolworks:item/resource_feed",
+    "layer1": "woolworks:item/resource_feed_overlay"
+  }
+}

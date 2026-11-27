@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/cube","textures":{"particle":"woolworks:block/wool_worker_side","north":"woolworks:block/wool_worker_front","south":"woolworks:block/wool_worker_back","east":"woolworks:block/wool_worker_side","west":"woolworks:block/wool_worker_side","up":"woolworks:block/wool_worker_top","down":"woolworks:block/wool_worker_bottom"}}

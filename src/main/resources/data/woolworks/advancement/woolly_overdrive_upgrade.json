@@ -1,0 +1,5 @@
+{
+  "parent": "woolworks:woolly_speed_upgrade",
+  "display": {"icon": {"id": "woolworks:woolly_overdrive_upgrade"}, "title": {"translate": "advancement.woolworks.woolly_overdrive_upgrade.title"}, "description": {"translate": "advancement.woolworks.woolly_overdrive_upgrade.description"}, "frame": "goal", "show_toast": true, "announce_to_chat": false, "hidden": false},
+  "criteria": {"item": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": "woolworks:woolly_overdrive_upgrade"}]}}}
+}

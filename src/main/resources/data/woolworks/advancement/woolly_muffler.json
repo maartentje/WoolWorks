@@ -1,0 +1,5 @@
+{
+  "parent": "woolworks:wool_worker",
+  "display": {"icon": {"id": "woolworks:woolly_muffler"}, "title": {"translate": "advancement.woolworks.woolly_muffler.title"}, "description": {"translate": "advancement.woolworks.woolly_muffler.description"}, "frame": "task", "show_toast": true, "announce_to_chat": false, "hidden": false},
+  "criteria": {"item": {"trigger": "minecraft:inventory_changed", "conditions": {"items": [{"items": "woolworks:woolly_muffler"}]}}}
+}

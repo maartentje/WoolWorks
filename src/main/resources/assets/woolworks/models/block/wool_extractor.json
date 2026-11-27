@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/cube","textures":{"particle":"woolworks:block/wool_extractor_side","north":"woolworks:block/wool_extractor_front","south":"woolworks:block/wool_extractor_back","east":"woolworks:block/wool_extractor_side","west":"woolworks:block/wool_extractor_side","up":"woolworks:block/wool_extractor_top","down":"woolworks:block/wool_extractor_bottom"}}

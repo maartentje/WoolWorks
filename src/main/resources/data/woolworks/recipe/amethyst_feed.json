@@ -1,0 +1,1 @@
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:amethyst","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:amethyst_shard"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:amethyst"}}}}

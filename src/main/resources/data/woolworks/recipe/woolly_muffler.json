@@ -1,0 +1,1 @@
+{"type":"woolworks:resource_validated_shaped","pattern":["W W","ICI","S S"],"key":{"W":{"type":"woolworks:infused_wool"},"I":{"item":"minecraft:iron_ingot"},"C":{"item":"minecraft:copper_ingot"},"S":{"item":"minecraft:stick"}},"result":{"id":"woolworks:woolly_muffler"}}
