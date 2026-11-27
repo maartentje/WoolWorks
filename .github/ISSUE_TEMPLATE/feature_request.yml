@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an improvement to Wool Works.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: feature
+    attributes:
+      label: Feature description
+      description: What would you like to see?
+    validations:
+      required: true
+  - type: textarea
+    id: usefulness
+    attributes:
+      label: Why would this be useful?
+    validations:
+      required: true
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Suggested implementation
+      description: Share any ideas for how this could work.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context

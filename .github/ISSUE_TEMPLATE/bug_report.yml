@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a problem with Wool Works.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: woolworks-version
+    attributes:
+      label: Wool Works version
+    validations:
+      required: true
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft version
+      value: "1.21.1"
+  - type: input
+    id: neoforge-version
+    attributes:
+      label: NeoForge version
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Singleplayer
+        - Dedicated Server
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: Describe the steps needed to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other installed mods or modpack
+      description: Include relevant mod versions or the modpack name and version.
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Logs, crash reports and screenshots
+      description: Attach relevant files or screenshots. Remove sensitive information from logs before submitting.
+  - type: checkboxes
+    id: existing-issues
+    attributes:
+      label: Existing issues
+      options:
+        - label: I have checked existing issues for this problem.
+          required: true
