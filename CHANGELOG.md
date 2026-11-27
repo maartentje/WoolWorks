@@ -4,6 +4,16 @@ All notable changes to Wool Works will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.0]
+
+First stable release for Minecraft 1.21.1 (NeoForge).
+
+### Features
+
+- Raise Resource Sheep for Infused Wool, with configurable vanilla and automatically detected modded resources.
+- Automate wool production, resource extraction and FE generation with Wool Works machines and cables.
+- Customize production with upgrades, tools, datapacks and optional JEI and Jade integrations.
+
 ### Fixed
 
 - Fixed vertical Wool Insulated Cable arms pointing away from their connections.

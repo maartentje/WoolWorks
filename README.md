@@ -8,7 +8,8 @@
 
 ![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-5C8A3C)
 ![NeoForge](https://img.shields.io/badge/Mod%20loader-NeoForge-orange)
-![Alpha](https://img.shields.io/badge/Release-alpha-blueviolet)
+![Release 1.0.0](https://img.shields.io/badge/Release-1.0.0-blueviolet)
+[![CurseForge](https://img.shields.io/badge/Download-CurseForge-orange)](https://www.curseforge.com/minecraft/mc-mods/wool-works)
 
 Craft special feed, transform ordinary sheep into resource sheep, and shear their Infused Wool. Extract the resources you need—or turn wool into energy to keep your farm running.
 
@@ -66,10 +67,8 @@ Manual compatibility testing has covered KubeJS recipe customization, Almost Uni
 ## Installation
 
 1. Install **Minecraft Java Edition 1.21.1** and **NeoForge 21.1.267 or newer in the 21.1.x series**.
-2. Place the Wool Works release JAR in the instance's `mods` folder. For multiplayer, install it on both the server and connecting clients.
+2. Download the Wool Works release JAR from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/wool-works) and place it in the instance's `mods` folder. For multiplayer, install it on both the server and connecting clients.
 3. Launch the game. JEI, Jade and material-providing mods may be installed separately, but none is required.
-
-> **Alpha notice:** Wool Works is an early public alpha. Bugs, balance changes and compatibility issues may occur. Back up important worlds before updating.
 
 ## More information
 
