@@ -6,9 +6,9 @@
 
 **Turn a flock of sheep into a wool-powered resource industry.**
 
-![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-5C8A3C)
+![Minecraft 26.1.2](https://img.shields.io/badge/Minecraft-26.1.2-5C8A3C)
 ![NeoForge](https://img.shields.io/badge/Mod%20loader-NeoForge-orange)
-![Release 1.0.0](https://img.shields.io/badge/Release-1.0.0-blueviolet)
+![Development](https://img.shields.io/badge/Development-26.1.2-blueviolet)
 [![CurseForge](https://img.shields.io/badge/Download-CurseForge-orange)](https://www.curseforge.com/minecraft/mc-mods/wool-works)
 
 Craft special feed, transform ordinary sheep into resource sheep, and shear their Infused Wool. Extract the resources you need—or turn wool into energy to keep your farm running.
@@ -62,12 +62,14 @@ Wool Works includes 38 vanilla resource types and automatically enables up to 12
 
 [JEI](https://github.com/mezz/JustEnoughItems) can show recipes and resource variants. [Jade](https://github.com/Snownee/Jade) can show machine and sheep information; detailed machine data on a dedicated server requires Jade on both server and client. Both integrations are optional.
 
-Manual compatibility testing has covered KubeJS recipe customization, Almost Unified, external FE systems and item automation, including Pipez. Individual mod versions and configurations can differ; this is not a guarantee of universal compatibility.
+Manual testing on 26.1.2 has covered Applied Energistics 2, a Mekanism fan port (Version Locked), Oritech, Mystical Agriculture, external FE transfer and hopper automation. KubeJS, Almost Unified and Pipez were tested on 1.21.1; their 26.1.2 compatibility has not been established. Individual mod versions and configurations can differ; this is not a guarantee of universal compatibility.
 
 ## Installation
 
-1. Install **Minecraft Java Edition 1.21.1** and **NeoForge 21.1.267 or newer in the 21.1.x series**.
-2. Download the Wool Works release JAR from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/wool-works) and place it in the instance's `mods` folder. For multiplayer, install it on both the server and connecting clients.
+This branch targets 26.1.2. For Minecraft 1.21.1, use the corresponding release from CurseForge. Do not interchange JARs between game versions. Back up worlds before upgrading.
+
+1. Install **Minecraft Java Edition 26.1.2** and **NeoForge 26.1.2.130** (tested version).
+2. Download the matching 26.1.2 Wool Works release JAR when available from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/wool-works) and place it in the instance's `mods` folder. For multiplayer, install it on both the server and connecting clients.
 3. Launch the game. JEI, Jade and material-providing mods may be installed separately, but none is required.
 
 ## More information

@@ -1,10 +1,10 @@
 # Wool Works compatibility test examples
 
-These examples are being adapted for the **Minecraft 26.1.2 NeoForge port**. The port does not yet compile, and target KubeJS, Mekanism and datapack compatibility have not been verified. They are manual test leads, not production balance recommendations. Back up worlds before testing.
+These examples target **Minecraft 26.1.2 NeoForge**. They are manual test leads, not production balance recommendations. Back up worlds before testing.
 
 ## Validation status
 
-The ingredient examples use target-style strings and `neoforge:ingredient_type`, but have not been tested against the target codecs. Pack metadata declares the 26.1.2 data format 101.1 using `min_format` and `max_format`, based on target sources; loading is untested. Previous 1.21.1 GameTest results do not establish target compatibility. KubeJS and Mekanism availability, recipe overrides and their APIs remain unverified on the target.
+The examples use 26.1.2 ingredient strings, `neoforge:ingredient_type` and datapack format 101.1. A resource-definition override and modded resources were tested during the port, but this exact example datapack and the KubeJS script have not been independently tested on 26.1.2. Check the material provider's actual item IDs and tags before running the examples.
 
 ## Setup
 
