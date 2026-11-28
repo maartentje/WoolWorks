@@ -9,7 +9,6 @@ import be.maarten.woolworks.machine.GeneratorBlockEntity;
 import be.maarten.woolworks.resource.ResourceTypes;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.Unbreakable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.BlockPos;
@@ -93,7 +92,7 @@ public final class MachineRecipeGameTests {
         }
         cable.setExtracting(Direction.DOWN, false);
         var restored = new CableBlockEntity(pos, level.getBlockState(pos));
-        restored.loadCustomOnly(cable.saveCustomOnly(level.registryAccess()), level.registryAccess());
+        restored.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), cable.saveCustomOnly(level.registryAccess())));
         if (restored.isExtracting(Direction.DOWN) || !restored.isExtracting(Direction.UP)) { helper.fail("Manual vertical extraction setting did not persist"); return; }
         helper.succeed();
     }
@@ -114,22 +113,22 @@ public final class MachineRecipeGameTests {
         var pos = helper.absolutePos(BlockPos.ZERO);
         level.setBlockAndUpdate(pos, ModMachines.EXTRACTOR.get().defaultBlockState());
         var extractor = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
-        extractor.energy().receiveEnergy(10000, false);
+        insertEnergy(extractor.energy(), 10000, false);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
-        if (extractor.isProcessing() || extractor.energy().getEnergyStored() != 10000 || extractor.menuData().get(2) != 0
+        if (extractor.isProcessing() || extractor.energy().getAmount() != 10000 || extractor.menuData().get(2) != 0
                 || extractor.menuData().get(6) != 0 || level.getBlockState(pos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)) {
             helper.fail("Empty extractor did not remain idle"); return;
         }
         var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.parse("woolworks:iron"));
         extractor.inventory().setStackInSlot(0, wool.copy());
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
-        if (!extractor.isProcessing() || extractor.energy().getEnergyStored() != 9960 || extractor.remainingTicks() != 199
+        if (!extractor.isProcessing() || extractor.energy().getAmount() != 9960 || extractor.remainingTicks() != 199
                 || !level.getBlockState(pos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)) {
             helper.fail("Extractor did not start after input insertion"); return;
         }
         extractor.inventory().setStackInSlot(0, ItemStack.EMPTY);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
-        if (extractor.isProcessing() || extractor.remainingTicks() != 0 || extractor.energy().getEnergyStored() != 9960
+        if (extractor.isProcessing() || extractor.remainingTicks() != 0 || extractor.energy().getAmount() != 9960
                 || extractor.menuData().get(1) != 0 || extractor.menuData().get(2) != 0 || extractor.menuData().get(6) != 0
                 || level.getBlockState(pos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)) {
             helper.fail("Removing input did not reset the extractor"); return;
@@ -145,13 +144,13 @@ public final class MachineRecipeGameTests {
     public static void unavailableTagSheepConversion(GameTestHelper helper) {
         var level = helper.getLevel();
         var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:ingots/osmium"));
-        if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false)) { helper.succeed(); return; }
+        if (net.minecraft.core.registries.BuiltInRegistries.ITEM.get(tag).map(t -> t.iterator().hasNext()).orElse(false)) { helper.succeed(); return; }
         var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
         var old = automatic.get(); automatic.set(true);
         var id = Identifier.parse("woolworks:osmium");
         var feed = ModItems.withResource(ModItems.RESOURCE_FEED.get(), id);
         var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
-        var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
+        var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         sheep.setResourceId(id); sheep.setNoAi(true); sheep.moveTo(helper.absolutePos(BlockPos.ZERO).getX() + .5, helper.absolutePos(BlockPos.ZERO).getY() + 1, helper.absolutePos(BlockPos.ZERO).getZ() + .5);
         level.addFreshEntity(sheep);
         helper.runAfterDelay(3, () -> {
@@ -170,14 +169,14 @@ public final class MachineRecipeGameTests {
         var oldDisabled = disabled.get(); var oldAutomatic = automatic.get();
         disabled.set(List.of("woolworks:iron")); automatic.set(false);
         var pos = helper.absolutePos(BlockPos.ZERO);
-        var iron = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
-        var missing = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
-        var optional = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
-        var valid = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
-        var ordinary = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var iron = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+        var missing = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+        var optional = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+        var valid = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+        var ordinary = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         iron.setResourceId(Identifier.parse("woolworks:iron")); iron.setAge(-12000); iron.setSheared(true);
         iron.setCustomName(Component.literal("Conversion test")); iron.setCustomNameVisible(true); iron.setNoAi(true); iron.setPersistenceRequired();
-        iron.setHealth(4); iron.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 1000));
+        iron.setHealth(4); iron.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SPEED, 1000));
         missing.setResourceId(Identifier.parse("test:missing"));
         optional.setResourceId(Identifier.parse("woolworks:osmium"));
         valid.setResourceId(Identifier.parse(Boolean.getBoolean("woolworks.test.osmium") ? "woolworks_test:tagged_custom" : "woolworks:coal"));
@@ -188,12 +187,12 @@ public final class MachineRecipeGameTests {
         var bounds = new net.minecraft.world.phys.AABB(pos).inflate(5);
         helper.runAfterDelay(3, () -> {
             try {
-                var sheep = level.getEntitiesOfClass(net.minecraft.world.entity.animal.Sheep.class, bounds);
+                var sheep = level.getEntitiesOfClass(net.minecraft.world.entity.animal.sheep.Sheep.class, bounds);
                 var converted = sheep.stream().filter(s -> Component.literal("Conversion test").equals(s.getCustomName())).findFirst().orElse(null);
                 if (!iron.isRemoved() || !missing.isRemoved() || !optional.isRemoved() || valid.isRemoved() || ordinary.isRemoved()
                         || converted == null || converted.getType() != net.minecraft.world.entity.EntityType.SHEEP || converted.getColor() != net.minecraft.world.item.DyeColor.WHITE
                         || !converted.isBaby() || !converted.isSheared() || !converted.isCustomNameVisible() || !converted.isPersistenceRequired()
-                        || !converted.isNoAi() || !converted.isNoGravity() || converted.getHealth() != 4 || !converted.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED)
+                        || !converted.isNoAi() || !converted.isNoGravity() || converted.getHealth() != 4 || !converted.hasEffect(net.minecraft.world.effect.MobEffects.SPEED)
                         || converted.getLeashHolder() != ordinary
                         || sheep.size() != 5 || !level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds).isEmpty()) {
                     helper.fail("Invalid sheep conversion, preservation or duplication failed"); return;
@@ -217,7 +216,7 @@ public final class MachineRecipeGameTests {
         var recipe = new WoolExtractionRecipe(net.minecraft.world.item.crafting.Ingredient.of(Items.STICK), result,
                 400, 80, java.util.Optional.empty(), java.util.Optional.empty());
         var input = new SingleRecipeInput(new ItemStack(Items.STICK));
-        if (!ItemStack.matches(recipe.getResultItem(helper.getLevel().registryAccess()), recipe.assemble(input, helper.getLevel().registryAccess()))
+        if (!ItemStack.matches(recipe.getResultItem(helper.getLevel().registryAccess()), recipe.assemble(input))
                 || recipe.getResultItem(helper.getLevel().registryAccess()).getCount() != 2
                 || !Component.literal("Custom output").equals(recipe.getResultItem(helper.getLevel().registryAccess()).get(DataComponents.CUSTOM_NAME))) {
             helper.fail("Displayed extraction result lost its count or components"); return;
@@ -227,7 +226,7 @@ public final class MachineRecipeGameTests {
 
     public static void automaticCatalogue(GameTestHelper helper) {
         var level = helper.getLevel();
-        var registry = level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY);
+        var registry = level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY);
         var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
         var disabled = be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES;
         var oldAutomatic = automatic.get(); var oldDisabled = disabled.get();
@@ -235,9 +234,9 @@ public final class MachineRecipeGameTests {
         if (Boolean.getBoolean("woolworks.test.empty_tag")) {
             var key = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:dusts/salt"));
             var salt = Identifier.parse("woolworks:salt");
-            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(key).map(t -> t.iterator().hasNext()).orElse(false)
-                    || ResourceTypes.enabled(level, salt) || level.getRecipeManager().byKey(Identifier.parse("woolworks:salt_feed")).isPresent()
-                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/salt")).isPresent()) {
+            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.get(key).map(t -> t.iterator().hasNext()).orElse(false)
+                    || ResourceTypes.enabled(level, salt) || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:salt_feed"))).isPresent()
+                    || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/salt"))).isPresent()) {
                 helper.fail("Empty salt tag enabled a resource or recipe"); return;
             }
         }
@@ -310,22 +309,22 @@ public final class MachineRecipeGameTests {
                         helper.fail("Invalid catalogue definition: " + id); return;
                     }
                     var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tagId);
-                    boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false);
+                    boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(tag).map(t -> t.iterator().hasNext()).orElse(false);
                     if (fixture && !present) { helper.fail("Test tag missing: " + tagId); return; }
                     if (ResourceTypes.enabled(level, id) != present) { helper.fail("Wrong availability: " + id); return; }
-                    var feed = level.getRecipeManager().byKey(Identifier.parse("woolworks:" + name + "_feed"));
-                    var extraction = level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/" + name));
+                    var feed = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:" + name + "_feed")));
+                    var extraction = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/" + name)));
                     if (feed.isPresent() != present || extraction.isPresent() != present) { helper.fail("Wrong conditional recipes: " + id); return; }
                     if (!present) continue;
                     var crafting = (net.minecraft.world.item.crafting.CraftingRecipe) feed.orElseThrow().value();
                     var processing = (WoolExtractionRecipe) extraction.orElseThrow().value();
                     var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
-                    if (!ItemStack.matches(processing.getResultItem(level.registryAccess()), processing.assemble(new SingleRecipeInput(wool), level.registryAccess()))) {
+                    if (!ItemStack.matches(processing.getResultItem(level.registryAccess()), processing.assemble(new SingleRecipeInput(wool)))) {
                         helper.fail("Displayed extraction result differs from machine result: " + id); return;
                     }
                     var input = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.IRON_INGOT)));
-                    if (fixture && (!crafting.matches(input, level) || !id.equals(crafting.assemble(input, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
-                            || !processing.matches(new SingleRecipeInput(wool), level) || !processing.assemble(new SingleRecipeInput(wool), level.registryAccess()).is(Items.COPPER_INGOT)
+                    if (fixture && (!crafting.matches(input, level) || !id.equals(crafting.assemble(input).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
+                            || !processing.matches(new SingleRecipeInput(wool), level) || !processing.assemble(new SingleRecipeInput(wool)).is(Items.COPPER_INGOT)
                             || processing.duration() != 200 || processing.energyPerTick() != 40 || GeneratorFuels.find(level, wool).isEmpty())) {
                         helper.fail("Catalogue recipes or fuel failed: " + id); return;
                     }
@@ -341,12 +340,12 @@ public final class MachineRecipeGameTests {
             var amethyst = Identifier.parse("woolworks:amethyst");
             var amethystInput = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.AMETHYST_SHARD)));
             var amethystWool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), amethyst);
-            var amethystFeed = (net.minecraft.world.item.crafting.CraftingRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:amethyst_feed")).orElseThrow().value();
-            var amethystExtraction = (WoolExtractionRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/amethyst")).orElseThrow().value();
+            var amethystFeed = (net.minecraft.world.item.crafting.CraftingRecipe) level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:amethyst_feed"))).orElseThrow().value();
+            var amethystExtraction = (WoolExtractionRecipe) level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/amethyst"))).orElseThrow().value();
             automatic.set(false);
             if (!ResourceTypes.enabled(level, amethyst) || !ResourceTypes.enabled(level, Identifier.parse("woolworks:iron")) || !amethystFeed.matches(amethystInput, level)
-                    || !amethyst.equals(amethystFeed.assemble(amethystInput, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
-                    || !amethystExtraction.matches(new SingleRecipeInput(amethystWool), level) || !amethystExtraction.assemble(new SingleRecipeInput(amethystWool), level.registryAccess()).is(Items.AMETHYST_SHARD)) {
+                    || !amethyst.equals(amethystFeed.assemble(amethystInput).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
+                    || !amethystExtraction.matches(new SingleRecipeInput(amethystWool), level) || !amethystExtraction.assemble(new SingleRecipeInput(amethystWool)).is(Items.AMETHYST_SHARD)) {
                 helper.fail("Amethyst or vanilla unavailable with automatic resources off"); return;
             }
             for (String name : "netherite_scrap echo_shard prismarine_shard prismarine_crystals glowstone_dust flint clay_ball ender_pearl blaze_rod breeze_rod slimeball magma_cream ghast_tear phantom_membrane bone string gunpowder spider_eye leather feather rotten_flesh shulker_shell rabbit_hide rabbits_foot ink_sac glow_ink_sac turtle_scute armadillo_scute".split(" ")) {
@@ -356,20 +355,20 @@ public final class MachineRecipeGameTests {
                 var type = registry.get(id);
                 var input = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(item)));
                 var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
-                var feed = (net.minecraft.world.item.crafting.CraftingRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:" + name + "_feed")).orElseThrow().value();
-                var extraction = (WoolExtractionRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/" + name)).orElseThrow().value();
+                var feed = (net.minecraft.world.item.crafting.CraftingRecipe) level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:" + name + "_feed"))).orElseThrow().value();
+                var extraction = (WoolExtractionRecipe) level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/" + name))).orElseThrow().value();
                 if (item == Items.AIR || type == null || type.automatic() || !net.minecraft.locale.Language.getInstance().has(type.translationKey())
                         || !ResourceTypes.enabled(level, id) || !feed.matches(input, level)
-                        || !id.equals(feed.assemble(input, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
-                        || !extraction.matches(new SingleRecipeInput(wool), level) || !extraction.assemble(new SingleRecipeInput(wool), level.registryAccess()).is(item)) {
+                        || !id.equals(feed.assemble(input).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
+                        || !extraction.matches(new SingleRecipeInput(wool), level) || !extraction.assemble(new SingleRecipeInput(wool)).is(item)) {
                     helper.fail("Vanilla catalogue failed: " + id); return;
                 }
                 disabled.set(List.of(id.toString()));
                 if (ResourceTypes.enabled(level, id) || feed.matches(input, level) || extraction.matches(new SingleRecipeInput(wool), level)) { helper.fail("Vanilla disabling failed: " + id); return; }
                 disabled.set(List.of());
             }
-            if (registry.get(Identifier.parse("woolworks:netherite")) != null || level.getRecipeManager().byKey(Identifier.parse("woolworks:netherite_feed")).isPresent()
-                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/netherite")).isPresent()) { helper.fail("Old Netherite resource remains"); return; }
+            if (registry.get(Identifier.parse("woolworks:netherite")) != null || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:netherite_feed"))).isPresent()
+                    || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/netherite"))).isPresent()) { helper.fail("Old Netherite resource remains"); return; }
             var custom = Identifier.parse("woolworks_test:tagged_custom");
             if (fixture && !ResourceTypes.enabled(level, custom)) { helper.fail("Custom tagged resource disabled by global switch"); return; }
             disabled.set(List.of(amethyst.toString(), custom.toString()));
@@ -381,7 +380,7 @@ public final class MachineRecipeGameTests {
 
     public static void categoryRestrictions(GameTestHelper helper) {
         var level = helper.getLevel();
-        var registry = level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY);
+        var registry = level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY);
         var metals = be.maarten.woolworks.machine.MachineConfig.ENABLE_METALS;
         var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
         var disabled = be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES;
@@ -390,11 +389,11 @@ public final class MachineRecipeGameTests {
         try {
             metals.set(true); automatic.set(true); disabled.set(List.of());
             var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:ingots/osmium"));
-            boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false);
+            boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(tag).map(t -> t.iterator().hasNext()).orElse(false);
             if (!ResourceTypes.enabled(level, iron) || ResourceTypes.enabled(level, osmium) != present) { helper.fail("Initial availability wrong"); return; }
             if (registry.get(Identifier.parse("woolworks:charged_certus_quartz")) != null || registry.get(Identifier.parse("woolworks:certus_quartz")) == null
-                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:charged_certus_quartz_feed")).isPresent()
-                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/charged_certus_quartz")).isPresent()) { helper.fail("Certus catalogue incorrect"); return; }
+                    || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:charged_certus_quartz_feed"))).isPresent()
+                    || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/charged_certus_quartz"))).isPresent()) { helper.fail("Certus catalogue incorrect"); return; }
             var json = com.google.gson.JsonParser.parseString("{\"translation_key\":\"test.custom\",\"color\":1,\"min_yield\":1,\"max_yield\":1}");
             var custom = be.maarten.woolworks.resource.ResourceType.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow();
             if (custom.category() != be.maarten.woolworks.resource.ResourceCategory.MATERIALS) { helper.fail("Default category incorrect"); return; }
@@ -411,13 +410,13 @@ public final class MachineRecipeGameTests {
     public static void categorySheepConversion(GameTestHelper helper) {
         var metals = be.maarten.woolworks.machine.MachineConfig.ENABLE_METALS;
         var old = metals.get(); metals.set(false);
-        var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(helper.getLevel());
+        var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(helper.getLevel(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         var pos = helper.absolutePos(BlockPos.ZERO);
         sheep.setResourceId(Identifier.parse("woolworks:iron")); sheep.moveTo(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5); sheep.setNoAi(true);
         helper.getLevel().addFreshEntity(sheep);
         helper.runAfterDelay(3, () -> {
             try {
-                if (!sheep.isRemoved() || helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.Sheep.class, new net.minecraft.world.phys.AABB(pos).inflate(3)).stream().noneMatch(s -> s.getType() == net.minecraft.world.entity.EntityType.SHEEP)) { helper.fail("Category-disabled sheep did not convert"); return; }
+                if (!sheep.isRemoved() || helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.sheep.Sheep.class, new net.minecraft.world.phys.AABB(pos).inflate(3)).stream().noneMatch(s -> s.getType() == net.minecraft.world.entity.EntityType.SHEEP)) { helper.fail("Category-disabled sheep did not convert"); return; }
             } finally { metals.set(old); }
             helper.succeed();
         });
@@ -427,7 +426,7 @@ public final class MachineRecipeGameTests {
         var level = helper.getLevel();
         var id = Identifier.parse("woolworks:osmium");
         var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:ingots/osmium"));
-        boolean tagged = net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false);
+        boolean tagged = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(tag).map(t -> t.iterator().hasNext()).orElse(false);
         if (Boolean.getBoolean("woolworks.test.osmium") && !tagged) { helper.fail("Osmium test tag did not load"); return; }
         var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
         var disabled = be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES;
@@ -435,28 +434,28 @@ public final class MachineRecipeGameTests {
         try {
             automatic.set(true); disabled.set(List.of());
             if (ResourceTypes.enabled(level, id) != tagged) { helper.fail("Osmium availability disagrees with its tag"); return; }
-            if (!tagged && (level.getRecipeManager().byKey(Identifier.parse("woolworks:osmium_feed")).isPresent()
-                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/osmium")).isPresent())) { helper.fail("Osmium recipes loaded without a non-empty tag"); return; }
+            if (!tagged && (level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:osmium_feed"))).isPresent()
+                    || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/osmium"))).isPresent())) { helper.fail("Osmium recipes loaded without a non-empty tag"); return; }
             if (tagged) {
                 var input = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.IRON_INGOT)));
-                var recipe = level.getRecipeManager().byKey(Identifier.parse("woolworks:osmium_feed")).orElseThrow().value();
+                var recipe = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:osmium_feed"))).orElseThrow().value();
                 if (!(recipe instanceof net.minecraft.world.item.crafting.CraftingRecipe crafting) || !crafting.matches(input, level)
-                        || !id.equals(crafting.assemble(input, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))) {
+                        || !id.equals(crafting.assemble(input).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))) {
                     helper.fail("Osmium feed recipe failed"); return;
                 }
                 var otherInput = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.COPPER_INGOT)));
                 if (!crafting.matches(otherInput, level)) { helper.fail("Feed rejected a second tagged ingot"); return; }
                 var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
-                var extraction = level.getRecipeManager().getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(wool), level).orElseThrow().value();
-                if (!extraction.assemble(new SingleRecipeInput(wool), level.registryAccess()).is(Items.COPPER_INGOT) || GeneratorFuels.find(level, wool).isEmpty()) {
+                var extraction = level.recipeAccess().getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(wool), level).orElseThrow().value();
+                if (!extraction.assemble(new SingleRecipeInput(wool)).is(Items.COPPER_INGOT) || GeneratorFuels.find(level, wool).isEmpty()) {
                     helper.fail("Osmium extraction or fuel failed"); return;
                 }
                 var pos = helper.absolutePos(BlockPos.ZERO);
-                var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+                var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
                 var player = helper.makeMockServerPlayerInLevel();
                 sheep.moveTo(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
                 level.addFreshEntity(sheep);
-                var feed = crafting.assemble(input, level.registryAccess());
+                var feed = crafting.assemble(input);
                 if (((be.maarten.woolworks.item.ResourceFeedItem) ModItems.RESOURCE_FEED.get()).interactLivingEntity(feed, player, sheep, InteractionHand.MAIN_HAND) != net.minecraft.world.InteractionResult.SUCCESS) { helper.fail("Osmium sheep transformation failed"); return; }
                 var animals = level.getEntitiesOfClass(be.maarten.woolworks.entity.ResourceSheep.class, new net.minecraft.world.phys.AABB(pos).inflate(3), s -> id.equals(s.resourceId()));
                 if (animals.isEmpty()) { helper.fail("Transformed osmium sheep missing"); return; }
@@ -465,11 +464,11 @@ public final class MachineRecipeGameTests {
                 if (drops.stream().noneMatch(e -> e.getItem().is(ModItems.INFUSED_WOOL.get()))) { helper.fail("Osmium sheep did not produce wool"); return; }
                 level.setBlockAndUpdate(pos, ModMachines.EXTRACTOR.get().defaultBlockState());
                 var machine = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
-                machine.inventory().setStackInSlot(0, wool.copy()); machine.energy().receiveEnergy(10000, false);
+                machine.inventory().setStackInSlot(0, wool.copy()); insertEnergy(machine.energy(), 10000, false);
                 for (int i = 0; i < 200; i++) be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), machine);
                 if (!machine.inventory().getStackInSlot(1).is(Items.COPPER_INGOT) || machine.inventory().getStackInSlot(1).getCount() != 1) { helper.fail("Osmium extractor processing failed"); return; }
                 disabled.set(List.of(id.toString()));
-                var disabledSheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+                var disabledSheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
                 if (ResourceTypes.enabled(level, id) || crafting.matches(input, level) || extraction.matches(new SingleRecipeInput(wool), level)
                         || ((be.maarten.woolworks.item.ResourceFeedItem) ModItems.RESOURCE_FEED.get()).interactLivingEntity(ModItems.withResource(ModItems.RESOURCE_FEED.get(), id), player, disabledSheep, InteractionHand.MAIN_HAND) != net.minecraft.world.InteractionResult.PASS) { helper.fail("Disabled osmium remains usable"); return; }
                 disabled.set(List.of()); automatic.set(false);
@@ -489,14 +488,14 @@ public final class MachineRecipeGameTests {
         var feed = ModItems.withResource(ModItems.RESOURCE_FEED.get(), id);
         try {
             config.set(List.of());
-            var recipe = level.getRecipeManager().byKey(Identifier.fromNamespaceAndPath("woolworks", "iron_feed")).orElseThrow().value();
+            var recipe = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.fromNamespaceAndPath("woolworks", "iron_feed"))).orElseThrow().value();
             if (!(recipe instanceof net.minecraft.world.item.crafting.CraftingRecipe crafting) || !crafting.matches(input, level)) { helper.fail("Iron feed is unavailable before disabling"); return; }
             config.set(List.of("woolworks:iron"));
             if (crafting.matches(input, level) || be.maarten.woolworks.machine.GeneratorFuels.find(level, wool).isPresent()
-                    || level.getRecipeManager().getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(wool), level).isPresent()) {
+                    || level.recipeAccess().getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(wool), level).isPresent()) {
                 helper.fail("Disabled iron can still be crafted or processed"); return;
             }
-            var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+            var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
             var player = helper.makeMockServerPlayerInLevel();
             if (sheep == null || ((be.maarten.woolworks.item.ResourceFeedItem)ModItems.RESOURCE_FEED.get()).interactLivingEntity(feed, player, sheep, net.minecraft.world.InteractionHand.MAIN_HAND) != net.minecraft.world.InteractionResult.PASS) {
                 helper.fail("Disabled feed transformed a sheep"); return;
@@ -562,8 +561,8 @@ public final class MachineRecipeGameTests {
         };
         channel.pipeline().addLast("woolworks_grass_test", handler);
         try {
-            var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
-            var resourceSheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
+            var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+            var resourceSheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
             if (worker == null || sheep == null || resourceSheep == null) { helper.fail("Missing grass-eating fixtures"); return; }
             BlockPos animalPos = workerPos.relative(facing);
             for (int mode = 0; mode < 4; mode++) {
@@ -615,7 +614,7 @@ public final class MachineRecipeGameTests {
 
     public static void mufflerRecipe(GameTestHelper helper) {
         var level = helper.getLevel();
-        var ids = level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).keySet().stream().filter(id -> ResourceTypes.enabled(level, id)).toList();
+        var ids = level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY).keySet().stream().filter(id -> ResourceTypes.enabled(level, id)).toList();
         if (ids.size() < 2) { helper.fail("Resource registry unexpectedly empty"); return; }
         for (var id : ids) {
             var first = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
@@ -623,8 +622,8 @@ public final class MachineRecipeGameTests {
             var input = CraftingInput.of(3, 3, List.of(first, ItemStack.EMPTY, second,
                     new ItemStack(Items.IRON_INGOT), new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.IRON_INGOT),
                     new ItemStack(Items.STICK), ItemStack.EMPTY, new ItemStack(Items.STICK)));
-            var recipe = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
-            if (recipe.isEmpty() || !recipe.get().value().assemble(input, level.registryAccess()).is(ModItems.MUFFLER.get())) {
+            var recipe = level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, level);
+            if (recipe.isEmpty() || !recipe.get().value().assemble(input).is(ModItems.MUFFLER.get())) {
                 helper.fail("Muffler recipe rejected " + id); return;
             }
         }
@@ -633,7 +632,7 @@ public final class MachineRecipeGameTests {
             var input = CraftingInput.of(3, 3, List.of(invalid, ItemStack.EMPTY, ModItems.withResource(ModItems.INFUSED_WOOL.get(), ids.getFirst()),
                     new ItemStack(Items.IRON_INGOT), new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.IRON_INGOT),
                     new ItemStack(Items.STICK), ItemStack.EMPTY, new ItemStack(Items.STICK)));
-            if (level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level).isPresent()) { helper.fail("Muffler accepted invalid wool"); return; }
+            if (level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, level).isPresent()) { helper.fail("Muffler accepted invalid wool"); return; }
         }
         if (new ItemStack(ModItems.MUFFLER.get()).getMaxStackSize() != 1) { helper.fail("Muffler stack limit incorrect"); return; }
         helper.succeed();
@@ -666,13 +665,13 @@ public final class MachineRecipeGameTests {
         worker.cycleMuffleMode(); worker.cycleMuffleMode(); worker.cycleMuffleMode();
         worker.cycleMuffleMode(); worker.cycleMuffleMode();
         var restored = new be.maarten.woolworks.machine.WorkerBlockEntity(pos, level.getBlockState(pos));
-        restored.loadCustomOnly(worker.saveCustomOnly(level.registryAccess()), level.registryAccess());
+        restored.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), worker.saveCustomOnly(level.registryAccess())));
         if (restored.muffleMode() != be.maarten.woolworks.machine.MuffleMode.SHEEP) { helper.fail("Worker mode did not persist"); return; }
         BlockPos other = pos.east();
         level.setBlockAndUpdate(other, ModMachines.GENERATOR.get().defaultBlockState());
         var generator = (GeneratorBlockEntity) level.getBlockEntity(other);
         CompoundTag invalid = generator.saveCustomOnly(level.registryAccess()); invalid.putInt("MuffleMode", 3);
-        generator.loadCustomOnly(invalid, level.registryAccess());
+        generator.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), invalid));
         if (generator.muffleMode() != be.maarten.woolworks.machine.MuffleMode.OFF) { helper.fail("Unsupported generator mode was accepted"); return; }
         generator.cycleMuffleMode(); generator.cycleMuffleMode();
         if (generator.muffleMode() != be.maarten.woolworks.machine.MuffleMode.OFF) { helper.fail("Generator mode cycle incorrect"); return; }
@@ -685,7 +684,7 @@ public final class MachineRecipeGameTests {
         Direction facing = (pos.getZ() & 15) == 0 ? Direction.SOUTH : Direction.NORTH;
         level.setBlockAndUpdate(pos, ModMachines.WORKER.get().defaultBlockState().setValue(be.maarten.woolworks.machine.WorkerBlock.FACING, facing));
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
-        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (worker == null || sheep == null) { helper.fail("Missing sound test entities"); return; }
         sheep.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5 + facing.getStepZ());
         sheep.setNoAi(true); sheep.setNoGravity(true); sheep.setInvulnerable(true); sheep.setAge(-1000); level.addFreshEntity(sheep);
@@ -706,7 +705,7 @@ public final class MachineRecipeGameTests {
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
         level.setBlockAndUpdate(pos, ModMachines.WORKER.get().defaultBlockState());
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
-        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (worker == null || sheep == null) { helper.fail("Missing sheep zone fixtures"); return; }
         worker.cycleMuffleMode(); worker.cycleMuffleMode();
         for (Direction direction : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
@@ -737,7 +736,7 @@ public final class MachineRecipeGameTests {
         level.setBlockAndUpdate(other, ModMachines.WORKER.get().defaultBlockState().setValue(be.maarten.woolworks.machine.WorkerBlock.FACING, Direction.WEST));
         var first = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
         var second = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(other);
-        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (first == null || second == null || sheep == null) { helper.fail("Missing overlapping fixtures"); return; }
         sheep.setPos(pos.getX() + 1.5, pos.getY(), pos.getZ() + .5);
         first.cycleMuffleMode(); first.cycleMuffleMode(); second.cycleMuffleMode(); second.cycleMuffleMode();
@@ -780,7 +779,7 @@ public final class MachineRecipeGameTests {
         var input = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         input.setCount(2); extractor.inventory().setStackInSlot(0, input);
         extractor.inventory().setStackInSlot(2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 2));
-        extractor.energy().receiveEnergy(20000, false);
+        insertEnergy(extractor.energy(), 20000, false);
         int[] heard = {0};
         java.util.function.Consumer<net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition> listener = event -> {
             if (event.getLevel() == level && event.getPosition().distanceToSqr(Vec3.atCenterOf(pos)) < .1
@@ -804,12 +803,12 @@ public final class MachineRecipeGameTests {
         Direction facing = (pos.getZ() & 15) == 0 ? Direction.SOUTH : Direction.NORTH;
         level.setBlockAndUpdate(pos, ModMachines.WORKER.get().defaultBlockState().setValue(be.maarten.woolworks.machine.WorkerBlock.FACING, facing));
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
-        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (worker == null || sheep == null) { helper.fail("Missing worker or sheep"); return; }
         sheep.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5 + facing.getStepZ());
         sheep.setNoAi(true); sheep.setNoGravity(true); sheep.setInvulnerable(true); sheep.setAge(0); level.addFreshEntity(sheep);
         worker.inventory().setStackInSlot(0, new ItemStack(Items.SHEARS));
-        worker.energy().receiveEnergy(1000, false);
+        insertEnergy(worker.energy(), 1000, false);
         int[] heard = {0};
         java.util.function.Consumer<net.neoforged.neoforge.event.PlayLevelSoundEvent.AtEntity> listener = event -> {
             if (event.getEntity() == sheep && event.getSound() != null && event.getSound().value() == net.minecraft.sounds.SoundEvents.SHEEP_SHEAR) heard[0]++;
@@ -822,7 +821,7 @@ public final class MachineRecipeGameTests {
                 sheep.setSheared(false);
                 CompoundTag saved = worker.saveCustomOnly(level.registryAccess());
                 saved.putInt("OperationProgress", be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.get() - 1);
-                worker.loadCustomOnly(saved, level.registryAccess());
+                worker.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
                 be.maarten.woolworks.machine.WorkerBlockEntity.tick(level, pos, level.getBlockState(pos), worker);
                 if (!sheep.isSheared() || heard[0] != expected[i]) { helper.fail("Automated shearing sound incorrect in mode " + worker.muffleMode() + ": " + heard[0]); return; }
                 worker.cycleMuffleMode();
@@ -835,8 +834,8 @@ public final class MachineRecipeGameTests {
         var level = helper.getLevel();
         var speed = new ItemStack(ModItems.SPEED_UPGRADE.get());
         var recipeInput = CraftingInput.of(3, 3, List.of(speed, speed, speed, speed, new ItemStack(Items.NETHER_STAR), speed, speed, speed, speed));
-        var match = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, recipeInput, level);
-        if (match.isEmpty() || !match.get().value().assemble(recipeInput, level.registryAccess()).is(ModItems.OVERDRIVE_UPGRADE.get())) {
+        var match = level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, recipeInput, level);
+        if (match.isEmpty() || !match.get().value().assemble(recipeInput).is(ModItems.OVERDRIVE_UPGRADE.get())) {
             helper.fail("Overdrive recipe did not match"); return;
         }
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -849,7 +848,7 @@ public final class MachineRecipeGameTests {
         }
         var saved = extractor.saveCustomOnly(level.registryAccess());
         var restored = new be.maarten.woolworks.machine.ExtractorBlockEntity(pos, level.getBlockState(pos));
-        restored.loadCustomOnly(saved, level.registryAccess());
+        restored.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         if (restored.inventory().getStackInSlot(2).getCount() != 2 || !restored.inventory().getStackInSlot(2).is(ModItems.OVERDRIVE_UPGRADE.get())) {
             helper.fail("Installed overdrive did not persist"); return;
         }
@@ -884,8 +883,8 @@ public final class MachineRecipeGameTests {
         oldInventory.setStackInSlot(2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 5));
         CompoundTag data = new CompoundTag();
         data.put("Inventory", oldInventory.serializeNBT(level.registryAccess()));
-        extractor.loadCustomOnly(data, level.registryAccess());
-        var recovered = extractor.saveCustomOnly(level.registryAccess()).getList("RecoveredUpgrades", 10);
+        extractor.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), data));
+        var recovered = extractor.saveCustomOnly(level.registryAccess()).getListOrEmpty("RecoveredUpgrades");
         if (extractor.inventory().getStackInSlot(2).getCount() != 2 || recovered.size() != 1
                 || ItemStack.parseOptional(level.registryAccess(), recovered.getCompound(0)).getCount() != 3) {
             helper.fail("Invalid saved upgrade stack was not safely recovered"); return;
@@ -911,14 +910,14 @@ public final class MachineRecipeGameTests {
             int ticks = new int[]{200, 40, 67, 34}[variant];
             int output = new int[]{1, 1, 2, 4}[variant];
             int cost = new int[]{40, 40, 80, 160}[variant];
-            extractor.energy().receiveEnergy(20000, false);
+            insertEnergy(extractor.energy(), 20000, false);
             for (int i = 0; i < ticks - 1; i++) {
                 be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
                 if (extractor.remainingTicks() != ticks - i - 1) { helper.fail("Incorrect remaining extraction ticks for upgrade " + variant); return; }
             }
             if (!extractor.inventory().getStackInSlot(1).isEmpty()) { helper.fail("Upgrade completed too early: " + variant); return; }
             be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
-            if (extractor.inventory().getStackInSlot(1).getCount() != output || extractor.energy().getEnergyStored() != 20000 - ticks * cost) {
+            if (extractor.inventory().getStackInSlot(1).getCount() != output || extractor.energy().getAmount() != 20000 - ticks * cost) {
                 helper.fail("Upgrade balancing incorrect for variant " + variant); return;
             }
         }
@@ -932,10 +931,10 @@ public final class MachineRecipeGameTests {
         var extractor = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
         extractor.inventory().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         extractor.inventory().setStackInSlot(2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 2));
-        extractor.energy().receiveEnergy(159, false);
+        insertEnergy(extractor.energy(), 159, false);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
-        if (extractor.energy().getEnergyStored() != 159 || extractor.menuData().get(1) != 0) { helper.fail("Insufficient energy did not pause"); return; }
-        extractor.energy().receiveEnergy(10000, false);
+        if (extractor.energy().getAmount() != 159 || extractor.menuData().get(1) != 0) { helper.fail("Insufficient energy did not pause"); return; }
+        insertEnergy(extractor.energy(), 10000, false);
         for (int i = 0; i < 10; i++) be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
         extractor.inventory().setStackInSlot(2, new ItemStack(ModItems.SPEED_UPGRADE.get(), 8));
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
@@ -943,10 +942,10 @@ public final class MachineRecipeGameTests {
             helper.fail("Upgrade change did not reset progress"); return;
         }
         extractor.inventory().setStackInSlot(1, new ItemStack(Items.IRON_INGOT, 64));
-        int energy = extractor.energy().getEnergyStored();
+        long energy = extractor.energy().getAmount();
         long remaining = extractor.remainingTicks();
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
-        if (extractor.energy().getEnergyStored() != energy || extractor.remainingTicks() != remaining || extractor.isProcessing()) { helper.fail("Blocked output consumed energy or progressed"); return; }
+        if (extractor.energy().getAmount() != energy || extractor.remainingTicks() != remaining || extractor.isProcessing()) { helper.fail("Blocked output consumed energy or progressed"); return; }
         helper.succeed();
     }
 
@@ -958,18 +957,18 @@ public final class MachineRecipeGameTests {
         var extractor = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
         extractor.inventory().setStackInSlot(0, new ItemStack(Items.STICK));
         extractor.inventory().setStackInSlot(2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 2));
-        extractor.energy().receiveEnergy(1000, false);
+        insertEnergy(extractor.energy(), 1000, false);
         for (int i = 0; i < 2; i++) be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
         var output = extractor.inventory().getStackInSlot(1);
         if (!output.is(Items.IRON_INGOT) || output.getCount() != 64 || !Component.literal("Datapack result").equals(output.get(DataComponents.CUSTOM_NAME))
-                || extractor.energy().getEnergyStored() != 928 || !extractor.inventory().getStackInSlot(0).isEmpty()) {
+                || extractor.energy().getAmount() != 928 || !extractor.inventory().getStackInSlot(0).isEmpty()) {
             helper.fail("Custom recipe multiplication or components failed: " + output); return;
         }
         extractor.inventory().setStackInSlot(0, new ItemStack(Items.BLAZE_ROD));
         extractor.inventory().setStackInSlot(1, ItemStack.EMPTY);
-        int before = extractor.energy().getEnergyStored();
+        long before = extractor.energy().getAmount();
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
-        if (extractor.menuData().get(6) != 1 || extractor.energy().getEnergyStored() != before
+        if (extractor.menuData().get(6) != 1 || extractor.energy().getAmount() != before
                 || extractor.inventory().getStackInSlot(0).isEmpty() || !extractor.inventory().getStackInSlot(1).isEmpty()) {
             helper.fail("Oversized multiplied result was not blocked"); return;
         }
@@ -992,7 +991,7 @@ public final class MachineRecipeGameTests {
         var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         generator.fuel().setStackInSlot(0, iron.copy());
         extractor.inventory().setStackInSlot(0, iron.copy());
-        extractor.energy().receiveEnergy(1000, false);
+        insertEnergy(extractor.energy(), 1000, false);
         GeneratorBlockEntity.tick(level, generatorPos, generatorState, generator);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, extractorPos, extractorState, extractor);
         if (!level.getBlockState(generatorPos).getValue(be.maarten.woolworks.machine.GeneratorBlock.ACTIVE)
@@ -1020,7 +1019,7 @@ public final class MachineRecipeGameTests {
         if (level.getBlockState(generatorPos).getValue(be.maarten.woolworks.machine.GeneratorBlock.ACTIVE)
                 || level.getBlockState(extractorPos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)
                 || level.getBlockState(generatorPos).getLightEmission() != 0
-                || generator.energy().getEnergyStored() != 20000 || extractor.inventory().getStackInSlot(0).isEmpty()) {
+                || generator.energy().getAmount() != 20000 || extractor.inventory().getStackInSlot(0).isEmpty()) {
             helper.fail("Blocked machines remained active or lost their contents"); return;
         }
         helper.succeed();
@@ -1036,7 +1035,7 @@ public final class MachineRecipeGameTests {
         if (menu.slots.getFirst().x != 91 || menu.slots.getFirst().y != 49) { helper.fail("Generator input slot alignment changed"); return; }
         CompoundTag saved = generator.saveCustomOnly(level.registryAccess());
         saved.putInt("Energy", 20000); saved.putInt("BurnRemaining", 200); saved.putInt("BurnTotal", 400); saved.putInt("GenerationRate", 40);
-        generator.loadCustomOnly(saved, level.registryAccess());
+        generator.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         if (generator.menuData().get(1) != 500) { helper.fail("Fuel progress was not elapsed progress"); return; }
         GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.menuData().get(1) != 500 || generator.remainingFuelTicks() != 200 || generator.isProcessing()) { helper.fail("Fuel progress advanced while generator was full"); return; }
@@ -1044,7 +1043,7 @@ public final class MachineRecipeGameTests {
         GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.menuData().get(1) <= 500) { helper.fail("Fuel progress did not resume"); return; }
         saved = generator.saveCustomOnly(level.registryAccess()); saved.putInt("BurnRemaining", 1);
-        generator.loadCustomOnly(saved, level.registryAccess());
+        generator.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.menuData().get(1) != 0) { helper.fail("Completed fuel progress did not reset"); return; }
         helper.succeed();
@@ -1073,7 +1072,7 @@ public final class MachineRecipeGameTests {
         cable.setExtracting(Direction.WEST, false);
         level.setBlockAndUpdate(pos.west(), level.getBlockState(pos.west()).setValue(be.maarten.woolworks.machine.GeneratorBlock.ACTIVE, true));
         var restored = new CableBlockEntity(pos, level.getBlockState(pos));
-        restored.loadCustomOnly(cable.saveCustomOnly(level.registryAccess()), level.registryAccess());
+        restored.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), cable.saveCustomOnly(level.registryAccess())));
         if (cable.isExtracting(Direction.WEST) || restored.isExtracting(Direction.WEST)) { helper.fail("Manual passive setting was overwritten"); return; }
         ItemStack tagged = new ItemStack(ModMachines.CABLE_ITEM.get());
         CompoundTag data = new CompoundTag(); data.putInt("ExtractionMask", 0);
@@ -1105,13 +1104,13 @@ public final class MachineRecipeGameTests {
 
     public static void workerCrafting(GameTestHelper helper) {
         var level = helper.getLevel();
-        for (var id : level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).keySet()) {
+        for (var id : level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY).keySet()) {
             if (!ResourceTypes.enabled(level, id)) continue;
             var input = CraftingInput.of(3, 3, List.of(new ItemStack(Items.IRON_INGOT), new ItemStack(Items.IRON_INGOT), new ItemStack(Items.IRON_INGOT),
                     new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.REDSTONE),
                     new ItemStack(Items.REDSTONE), new ItemStack(Items.SHEARS), ModItems.withResource(ModItems.INFUSED_WOOL.get(), id)));
-            var recipe = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
-            if (recipe.isEmpty() || !recipe.get().value().assemble(input, level.registryAccess()).is(ModMachines.WORKER_ITEM.get())) {
+            var recipe = level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, level);
+            if (recipe.isEmpty() || !recipe.get().value().assemble(input).is(ModMachines.WORKER_ITEM.get())) {
                 helper.fail("Worker recipe rejected " + id); return;
             }
         }
@@ -1141,8 +1140,8 @@ public final class MachineRecipeGameTests {
         var overCapacity = worker.saveCustomOnly(level.registryAccess());
         overCapacity.putInt("Energy", 90000);
         var cappedWorker = new be.maarten.woolworks.machine.WorkerBlockEntity(pos, level.getBlockState(pos));
-        cappedWorker.loadCustomOnly(overCapacity, level.registryAccess());
-        if (cappedWorker.energy().getMaxEnergyStored() != 20000 || cappedWorker.energy().getEnergyStored() != 20000) {
+        cappedWorker.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), overCapacity));
+        if (cappedWorker.energy().getCapacity() != 20000 || cappedWorker.energy().getAmount() != 20000) {
             helper.fail("Worker energy was not capped at fixed capacity"); return;
         }
         for (Direction dir : List.of(Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST)) {
@@ -1155,8 +1154,8 @@ public final class MachineRecipeGameTests {
             }
         }
         for (Direction dir : Direction.values()) {
-            var items = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, dir);
-            var energy = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, dir);
+            var items = level.getCapability(Capabilities.Item.BLOCK, pos, dir);
+            var energy = level.getCapability(Capabilities.Energy.BLOCK, pos, dir);
             if (items == null || items.getSlots() != 20 || energy == null || !energy.canReceive() || energy.canExtract()
                     || !items.isItemValid(0, new ItemStack(Items.SHEARS)) || items.isItemValid(2, new ItemStack(Items.WHITE_WOOL))) {
                 helper.fail("Worker automation failed on " + dir); return;
@@ -1166,7 +1165,7 @@ public final class MachineRecipeGameTests {
             worker.cycleArea();
             var saved = worker.saveCustomOnly(level.registryAccess());
             var restored = new be.maarten.woolworks.machine.WorkerBlockEntity(pos, level.getBlockState(pos));
-            restored.loadCustomOnly(saved, level.registryAccess());
+            restored.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
             if (worker.area() != size || restored.area() != size) { helper.fail("Worker area cycle or persistence failed at " + size); return; }
         }
         if (be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.getDefault() != 200) { helper.fail("Worker interval default is not 200 ticks"); return; }
@@ -1180,7 +1179,7 @@ public final class MachineRecipeGameTests {
         var legacy = worker.saveCustomOnly(level.registryAccess());
         legacy.putInt("Area", 11);
         var restoredLegacy = new be.maarten.woolworks.machine.WorkerBlockEntity(pos, level.getBlockState(pos));
-        restoredLegacy.loadCustomOnly(legacy, level.registryAccess());
+        restoredLegacy.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), legacy));
         if (restoredLegacy.area() != 9) { helper.fail("Legacy 11x11 area was not migrated"); return; }
         helper.succeed();
     }
@@ -1192,18 +1191,18 @@ public final class MachineRecipeGameTests {
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
         CompoundTag saved = worker.saveCustomOnly(level.registryAccess());
         saved.putInt("OperationProgress", 7);
-        worker.loadCustomOnly(saved, level.registryAccess());
+        worker.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         worker.inventory().setStackInSlot(0, new ItemStack(Items.SHEARS));
         for (int i = 0; i < 20; i++) be.maarten.woolworks.machine.WorkerBlockEntity.tick(level, pos, level.getBlockState(pos), worker);
         if (worker.data().get(3) != 7 || worker.operationStatus() != be.maarten.woolworks.machine.WorkerBlockEntity.INSUFFICIENT_ENERGY) {
             helper.fail("Worker timer did not pause without energy"); return;
         }
         var restored = new be.maarten.woolworks.machine.WorkerBlockEntity(pos, level.getBlockState(pos));
-        restored.loadCustomOnly(worker.saveCustomOnly(level.registryAccess()), level.registryAccess());
+        restored.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), worker.saveCustomOnly(level.registryAccess())));
         if (restored.data().get(3) != 7) { helper.fail("Paused worker progress did not persist"); return; }
-        worker.energy().receiveEnergy(1000, false);
+        insertEnergy(worker.energy(), 1000, false);
         for (int i = 0; i < 10; i++) be.maarten.woolworks.machine.WorkerBlockEntity.tick(level, pos, level.getBlockState(pos), worker);
-        if (worker.data().get(3) != 17 || worker.energy().getEnergyStored() != 1000) {
+        if (worker.data().get(3) != 17 || worker.energy().getAmount() != 1000) {
             helper.fail("Worker timer did not resume safely"); return;
         }
         helper.succeed();
@@ -1215,7 +1214,7 @@ public final class MachineRecipeGameTests {
         Direction facing = (pos.getZ() & 15) == 0 ? Direction.SOUTH : Direction.NORTH;
         level.setBlockAndUpdate(pos, ModMachines.WORKER.get().defaultBlockState().setValue(be.maarten.woolworks.machine.WorkerBlock.FACING, facing));
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
-        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (worker == null || sheep == null) { helper.fail("Missing worker or sheep"); return; }
         sheep.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5 + facing.getStepZ());
         sheep.setNoAi(true); sheep.setNoGravity(true); sheep.setInvulnerable(true); sheep.setAge(0); sheep.setSheared(true);
@@ -1223,21 +1222,21 @@ public final class MachineRecipeGameTests {
         worker.inventory().setStackInSlot(0, new ItemStack(Items.SHEARS));
         worker.inventory().setStackInSlot(1, new ItemStack(Items.WHEAT));
         for (int i = 2; i < 20; i++) worker.inventory().setStackInSlot(i, new ItemStack(Items.STONE, 64));
-        worker.energy().receiveEnergy(1000, false);
+        insertEnergy(worker.energy(), 1000, false);
         CompoundTag saved = worker.saveCustomOnly(level.registryAccess());
         saved.putInt("OperationProgress", be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.get() - 1);
-        worker.loadCustomOnly(saved, level.registryAccess());
+        worker.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         be.maarten.woolworks.machine.WorkerBlockEntity.tick(level, pos, level.getBlockState(pos), worker);
-        if (sheep.isSheared() || worker.energy().getEnergyStored() != 600 || !worker.inventory().getStackInSlot(1).isEmpty()
+        if (sheep.isSheared() || worker.energy().getAmount() != 600 || !worker.inventory().getStackInSlot(1).isEmpty()
                 || worker.operationStatus() != be.maarten.woolworks.machine.WorkerBlockEntity.OUTPUT_FULL) {
             helper.fail("Full output blocked regrowth or consumed shearing energy"); return;
         }
         worker.inventory().setStackInSlot(2, new ItemStack(Items.WHITE_WOOL, 61));
         saved = worker.saveCustomOnly(level.registryAccess());
         saved.putInt("OperationProgress", be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.get() - 1);
-        worker.loadCustomOnly(saved, level.registryAccess());
+        worker.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         be.maarten.woolworks.machine.WorkerBlockEntity.tick(level, pos, level.getBlockState(pos), worker);
-        if (!sheep.isSheared() || worker.energy().getEnergyStored() != 400 || worker.inventory().getStackInSlot(2).getCount() <= 61) {
+        if (!sheep.isSheared() || worker.energy().getAmount() != 400 || worker.inventory().getStackInSlot(2).getCount() <= 61) {
             helper.fail("Worker did not resume into partially filled compatible output"); return;
         }
         sheep.discard(); helper.succeed();
@@ -1249,7 +1248,7 @@ public final class MachineRecipeGameTests {
         Direction facing = (pos.getZ() & 15) == 0 ? Direction.SOUTH : Direction.NORTH;
         level.setBlockAndUpdate(pos, ModMachines.WORKER.get().defaultBlockState().setValue(be.maarten.woolworks.machine.WorkerBlock.FACING, facing));
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
-        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (worker == null || sheep == null) { helper.fail("Missing worker or sheep"); return; }
         sheep.setColor(net.minecraft.world.item.DyeColor.WHITE);
         sheep.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5 + facing.getStepZ());
@@ -1257,7 +1256,7 @@ public final class MachineRecipeGameTests {
         worker.inventory().setStackInSlot(0, new ItemStack(Items.SHEARS));
         worker.inventory().setStackInSlot(2, new ItemStack(Items.WHITE_WOOL, 63));
         for (int i = 3; i < 20; i++) worker.inventory().setStackInSlot(i, new ItemStack(Items.STONE, 64));
-        worker.energy().receiveEnergy(1000, false);
+        insertEnergy(worker.energy(), 1000, false);
         CompoundTag saved = worker.saveCustomOnly(level.registryAccess());
         CompoundTag plan = new CompoundTag();
         plan.putUUID("Sheep", sheep.getUUID());
@@ -1269,19 +1268,19 @@ public final class MachineRecipeGameTests {
         plans.add(plan);
         saved.put("PendingShearing", plans);
         saved.putInt("OperationProgress", be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.get() - 1);
-        worker.loadCustomOnly(saved, level.registryAccess());
+        worker.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         be.maarten.woolworks.machine.WorkerBlockEntity.tick(level, pos, level.getBlockState(pos), worker);
-        if (sheep.isSheared() || worker.energy().getEnergyStored() != 1000 || worker.inventory().getStackInSlot(2).getCount() != 63
-                || worker.saveCustomOnly(level.registryAccess()).getList("PendingShearing", 10).size() != 1) {
+        if (sheep.isSheared() || worker.energy().getAmount() != 1000 || worker.inventory().getStackInSlot(2).getCount() != 63
+                || worker.saveCustomOnly(level.registryAccess()).getListOrEmpty("PendingShearing").size() != 1) {
             helper.fail("A result that did not fit was consumed, changed, or lost"); return;
         }
         worker.inventory().setStackInSlot(2, new ItemStack(Items.WHITE_WOOL, 62));
         saved = worker.saveCustomOnly(level.registryAccess());
         saved.putInt("OperationProgress", be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.get() - 1);
-        worker.loadCustomOnly(saved, level.registryAccess());
+        worker.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         be.maarten.woolworks.machine.WorkerBlockEntity.tick(level, pos, level.getBlockState(pos), worker);
-        if (!sheep.isSheared() || worker.energy().getEnergyStored() != 800 || worker.inventory().getStackInSlot(2).getCount() != 64
-                || !worker.saveCustomOnly(level.registryAccess()).getList("PendingShearing", 10).isEmpty()) {
+        if (!sheep.isSheared() || worker.energy().getAmount() != 800 || worker.inventory().getStackInSlot(2).getCount() != 64
+                || !worker.saveCustomOnly(level.registryAccess()).getListOrEmpty("PendingShearing").isEmpty()) {
             helper.fail("Reserved result did not resume exactly once"); return;
         }
         sheep.discard(); helper.succeed();
@@ -1293,18 +1292,18 @@ public final class MachineRecipeGameTests {
         Direction facing = (pos.getZ() & 15) == 0 ? Direction.SOUTH : Direction.NORTH;
         level.setBlockAndUpdate(pos, ModMachines.WORKER.get().defaultBlockState().setValue(be.maarten.woolworks.machine.WorkerBlock.FACING, facing));
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
-        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level);
+        var sheep = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (worker == null || sheep == null) { helper.fail("Worker or sheep missing"); return; }
         sheep.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5 + facing.getStepZ());
         sheep.setNoAi(true); sheep.setNoGravity(true); sheep.setInvulnerable(true); sheep.setAge(0); sheep.setSheared(true); level.addFreshEntity(sheep);
         worker.inventory().setStackInSlot(0, new ItemStack(Items.SHEARS));
         worker.inventory().setStackInSlot(1, new ItemStack(Items.WHEAT));
-        worker.energy().receiveEnergy(1000, false);
+        insertEnergy(worker.energy(), 1000, false);
         helper.runAfterDelay(210, () -> {
             int wool = 0;
             for (int i = 2; i < 20; i++) wool += worker.inventory().getStackInSlot(i).getCount();
-            if (!sheep.isSheared() || wool < 1 || wool > 3 || worker.energy().getEnergyStored() != 400 || !worker.inventory().getStackInSlot(1).isEmpty()) {
-                helper.fail("Worker failed cycle: sheared=" + sheep.isSheared() + ", wool=" + wool + ", energy=" + worker.energy().getEnergyStored() + ", wheat=" + worker.inventory().getStackInSlot(1).getCount() + ", pos=" + sheep.position()); return;
+            if (!sheep.isSheared() || wool < 1 || wool > 3 || worker.energy().getAmount() != 400 || !worker.inventory().getStackInSlot(1).isEmpty()) {
+                helper.fail("Worker failed cycle: sheared=" + sheep.isSheared() + ", wool=" + wool + ", energy=" + worker.energy().getAmount() + ", wheat=" + worker.inventory().getStackInSlot(1).getCount() + ", pos=" + sheep.position()); return;
             }
             sheep.discard(); helper.succeed();
         });
@@ -1316,19 +1315,19 @@ public final class MachineRecipeGameTests {
         Direction facing = (pos.getZ() & 15) == 0 ? Direction.SOUTH : Direction.NORTH;
         level.setBlockAndUpdate(pos, ModMachines.WORKER.get().defaultBlockState().setValue(be.maarten.woolworks.machine.WorkerBlock.FACING, facing));
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
-        var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
+        var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         if (worker == null || sheep == null) { helper.fail("Worker or resource sheep missing"); return; }
         var id = Identifier.fromNamespaceAndPath("woolworks", "iron");
         sheep.setResourceId(id); sheep.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5 + facing.getStepZ());
         sheep.setNoAi(true); sheep.setNoGravity(true); sheep.setInvulnerable(true); sheep.setAge(0); level.addFreshEntity(sheep);
         worker.inventory().setStackInSlot(0, new ItemStack(Items.SHEARS));
-        worker.energy().receiveEnergy(1000, false);
+        insertEnergy(worker.energy(), 1000, false);
         long startTime = level.getGameTime();
         helper.runAfterDelay(210, () -> {
             ItemStack output = worker.inventory().getStackInSlot(2);
             if (!sheep.isSheared() || !id.equals(sheep.resourceId()) || !output.is(ModItems.INFUSED_WOOL.get())
-                    || !id.equals(output.get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE)) || worker.energy().getEnergyStored() != 800) {
-                helper.fail("Worker resource sheep: sheared=" + sheep.isSheared() + ", output=" + output + ", energy=" + worker.energy().getEnergyStored() + ", pos=" + sheep.position() + ", dt=" + (level.getGameTime() - startTime) + ", interval=" + be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.get() + ", ticking=" + level.shouldTickBlocksAt(sheep.blockPosition()) + ", ready=" + sheep.readyForShearing() + ", alive=" + sheep.isAlive() + ", health=" + sheep.getHealth() + ", baby=" + sheep.isBaby() + ", type=" + sheep.resourceType() + ", block=" + level.getBlockState(pos)); return;
+                    || !id.equals(output.get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE)) || worker.energy().getAmount() != 800) {
+                helper.fail("Worker resource sheep: sheared=" + sheep.isSheared() + ", output=" + output + ", energy=" + worker.energy().getAmount() + ", pos=" + sheep.position() + ", dt=" + (level.getGameTime() - startTime) + ", interval=" + be.maarten.woolworks.machine.MachineConfig.WORKER_INTERVAL.get() + ", ticking=" + level.shouldTickBlocksAt(sheep.blockPosition()) + ", ready=" + sheep.readyForShearing() + ", alive=" + sheep.isAlive() + ", health=" + sheep.getHealth() + ", baby=" + sheep.isBaby() + ", type=" + sheep.resourceType() + ", block=" + level.getBlockState(pos)); return;
             }
             sheep.discard(); helper.succeed();
         });
@@ -1336,7 +1335,7 @@ public final class MachineRecipeGameTests {
 
     public static void defaultRecipes(GameTestHelper helper) {
         var level = helper.getLevel();
-        var manager = level.getRecipeManager();
+        var manager = level.recipeAccess();
         ItemStack iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         ItemStack coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "coal"));
         var extraction = manager.getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(iron), level);
@@ -1362,8 +1361,8 @@ public final class MachineRecipeGameTests {
         helper.setBlock(relative, ModMachines.GENERATOR.get());
         BlockPos pos = helper.absolutePos(relative);
         var level = helper.getLevel();
-        var items = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, Direction.UP);
-        var energy = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, Direction.NORTH);
+        var items = level.getCapability(Capabilities.Item.BLOCK, pos, Direction.UP);
+        var energy = level.getCapability(Capabilities.Energy.BLOCK, pos, Direction.NORTH);
         if (items == null || energy == null || energy.canReceive() || !energy.canExtract()) {
             helper.fail("Generator capabilities must expose insertion and extraction-only energy");
             return;
@@ -1379,7 +1378,7 @@ public final class MachineRecipeGameTests {
             return;
         }
         helper.runAfterDelay(3, () -> {
-            if (energy.getEnergyStored() <= 0 || !items.getStackInSlot(0).isEmpty()) {
+            if (energy.getAmount() <= 0 || !items.getStackInSlot(0).isEmpty()) {
                 helper.fail("Generator did not consume fuel and produce energy");
                 return;
             }
@@ -1396,13 +1395,13 @@ public final class MachineRecipeGameTests {
         old.setStackInSlot(1, new ItemStack(Items.BUCKET));
         var save = new CompoundTag();
         save.put("Fuel", old.serializeNBT(level.registryAccess()));
-        generator.loadCustomOnly(save, level.registryAccess());
+        generator.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), save));
         if (generator.fuel().getSlots() != 1 || !generator.migratedRemainder().is(Items.BUCKET)) {
             helper.fail("Legacy output was not migrated"); return;
         }
         generator.fuel().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         for (int i = 0; i < 400; i++) GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
-        if (generator.energy().getEnergyStored() != 16000 || !generator.fuel().getStackInSlot(0).isEmpty()) {
+        if (generator.energy().getAmount() != 16000 || !generator.fuel().getStackInSlot(0).isEmpty()) {
             helper.fail("Generator burn did not produce exactly 16000 FE"); return;
         }
         generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(20000));
@@ -1426,7 +1425,7 @@ public final class MachineRecipeGameTests {
             helper.fail("Furnace fuel selection or custom-fuel priority failed"); return;
         }
         helper.setBlock(BlockPos.ZERO, ModMachines.GENERATOR.get());
-        var handler = level.getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(BlockPos.ZERO), Direction.UP);
+        var handler = level.getCapability(Capabilities.Item.BLOCK, helper.absolutePos(BlockPos.ZERO), Direction.UP);
         if (handler == null || handler.getSlots() != 1 || handler.insertItem(0, lava, false).isEmpty()) { helper.fail("Lava fuel accepted or unexpected output slot"); return; }
         helper.succeed();
     }
@@ -1435,14 +1434,14 @@ public final class MachineRecipeGameTests {
         helper.setBlock(BlockPos.ZERO, ModMachines.EXTRACTOR.get());
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
         var level = helper.getLevel();
-        var items = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, Direction.UP);
-        var energy = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, Direction.DOWN);
+        var items = level.getCapability(Capabilities.Item.BLOCK, pos, Direction.UP);
+        var energy = level.getCapability(Capabilities.Energy.BLOCK, pos, Direction.DOWN);
         if (items == null || energy == null || energy.canExtract() || !energy.canReceive()) {
             helper.fail("Extractor capabilities are missing or incorrectly directed");
             return;
         }
         ItemStack iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
-        if (!items.insertItem(0, iron, false).isEmpty() || energy.receiveEnergy(8000, false) != 8000) {
+        if (!items.insertItem(0, iron, false).isEmpty() || insertEnergy(energy, 8000, false) != 8000) {
             helper.fail("Extractor rejected valid input or energy");
             return;
         }
@@ -1461,8 +1460,8 @@ public final class MachineRecipeGameTests {
         var level = helper.getLevel();
         level.setBlockAndUpdate(generatorPos, ModMachines.GENERATOR.get().defaultBlockState());
         level.setBlockAndUpdate(extractorPos, ModMachines.EXTRACTOR.get().defaultBlockState());
-        var fuel = level.getCapability(Capabilities.ItemHandler.BLOCK, generatorPos, Direction.UP);
-        var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, extractorPos, Direction.UP);
+        var fuel = level.getCapability(Capabilities.Item.BLOCK, generatorPos, Direction.UP);
+        var inventory = level.getCapability(Capabilities.Item.BLOCK, extractorPos, Direction.UP);
         if (fuel == null || inventory == null) { helper.fail("Machine capabilities missing"); return; }
         var coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "coal"));
         var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
@@ -1487,25 +1486,25 @@ public final class MachineRecipeGameTests {
         level.setBlockAndUpdate(start, ModMachines.CABLE.get().defaultBlockState());
         level.setBlockAndUpdate(start.east(), ModMachines.CABLE.get().defaultBlockState());
         level.setBlockAndUpdate(end, ModMachines.EXTRACTOR.get().defaultBlockState());
-        var cable = level.getCapability(Capabilities.EnergyStorage.BLOCK, start, Direction.WEST);
-        var receiver = level.getCapability(Capabilities.EnergyStorage.BLOCK, end, Direction.WEST);
-        if (cable == null || cable.canReceive() || cable.receiveEnergy(1500, false) != 0) {
+        var cable = level.getCapability(Capabilities.Energy.BLOCK, start, Direction.WEST);
+        var receiver = level.getCapability(Capabilities.Energy.BLOCK, end, Direction.WEST);
+        if (cable == null || cable.canReceive() || insertEnergy(cable, 1500, false) != 0) {
             helper.fail("Passive cable accepted pushed energy"); return;
         }
         ((CableBlockEntity) level.getBlockEntity(start)).setExtracting(Direction.WEST, true);
-        if (cable == null || receiver == null || cable.receiveEnergy(1500, true) != 160 || receiver.getEnergyStored() != 0) {
+        if (cable == null || receiver == null || insertEnergy(cable, 1500, true) != 160 || receiver.getAmount() != 0) {
             helper.fail("Cable simulation or transfer limit is incorrect"); return;
         }
-        if (cable.receiveEnergy(1500, false) != 160 || cable.receiveEnergy(1, false) != 0 || receiver.getEnergyStored() != 160) {
+        if (insertEnergy(cable, 1500, false) != 160 || insertEnergy(cable, 1, false) != 0 || receiver.getAmount() != 160) {
             helper.fail("Cable did not enforce its shared per-tick limit"); return;
         }
         helper.runAfterDelay(1, () -> {
-            if (cable.receiveEnergy(500, false) != 160 || receiver.getEnergyStored() != 320) {
+            if (insertEnergy(cable, 500, false) != 160 || receiver.getAmount() != 320) {
                 helper.fail("Cable did not reset its transfer limit"); return;
             }
             level.removeBlock(start.east(), false);
             helper.runAfterDelay(1, () -> {
-                if (cable.receiveEnergy(100, false) != 0) { helper.fail("Cable transferred through a removed connection"); return; }
+                if (insertEnergy(cable, 100, false) != 0) { helper.fail("Cable transferred through a removed connection"); return; }
                 helper.succeed();
             });
         });
@@ -1520,8 +1519,8 @@ public final class MachineRecipeGameTests {
         ItemStack damaged = shears.copy();
         damaged.setDamageValue(18);
         var good = CraftingInput.of(2, 1, List.of(copper, shears));
-        var result = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, good, level);
-        if (result.isEmpty() || !result.get().value().assemble(good, level.registryAccess()).is(ModMachines.CABLE_ITEM.get())) {
+        var result = level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, good, level);
+        if (result.isEmpty() || !result.get().value().assemble(good).is(ModMachines.CABLE_ITEM.get())) {
             helper.fail("Copper-infused wool did not craft cable"); return;
         }
         if (!ItemStack.matches(result.get().value().getRemainingItems(good).get(1), damaged)) {
@@ -1534,14 +1533,14 @@ public final class MachineRecipeGameTests {
             helper.fail("Exhausted shears did not break"); return;
         }
         var unbreakable = almostBroken.copy();
-        unbreakable.set(DataComponents.UNBREAKABLE, new Unbreakable(true));
+        unbreakable.set(DataComponents.UNBREAKABLE, net.minecraft.util.Unit.INSTANCE);
         var unbreakableInput = CraftingInput.of(2, 1, List.of(copper, unbreakable));
         if (!ItemStack.matches(result.get().value().getRemainingItems(unbreakableInput).get(1), unbreakable)) {
             helper.fail("Unbreakable shears were damaged"); return;
         }
         var fallback = CraftingInput.of(3, 1, List.of(new ItemStack(Items.WHITE_WOOL), new ItemStack(Items.COPPER_INGOT), shears));
-        var vanilla = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, fallback, level);
-        if (vanilla.isEmpty() || vanilla.get().value().assemble(fallback, level.registryAccess()).getCount() != 4
+        var vanilla = level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, fallback, level);
+        if (vanilla.isEmpty() || vanilla.get().value().assemble(fallback).getCount() != 4
                 || !ItemStack.matches(vanilla.get().value().getRemainingItems(fallback).get(2), damaged)) {
             helper.fail("Vanilla cable recipe or shears remainder failed"); return;
         }
@@ -1558,12 +1557,12 @@ public final class MachineRecipeGameTests {
         level.setBlockAndUpdate(root.south(), ModMachines.CABLE.get().defaultBlockState());
         level.setBlockAndUpdate(root.east(2), ModMachines.EXTRACTOR.get().defaultBlockState());
         level.setBlockAndUpdate(root.south(2), ModMachines.EXTRACTOR.get().defaultBlockState());
-        var input = level.getCapability(Capabilities.EnergyStorage.BLOCK, root, Direction.WEST);
+        var input = level.getCapability(Capabilities.Energy.BLOCK, root, Direction.WEST);
         ((CableBlockEntity) level.getBlockEntity(root)).setExtracting(Direction.WEST, true);
-        var first = level.getCapability(Capabilities.EnergyStorage.BLOCK, root.east(2), Direction.WEST);
-        var second = level.getCapability(Capabilities.EnergyStorage.BLOCK, root.south(2), Direction.NORTH);
-        if (input == null || first == null || second == null || input.receiveEnergy(1000, false) != 160
-                || first.getEnergyStored() + second.getEnergyStored() != 160) {
+        var first = level.getCapability(Capabilities.Energy.BLOCK, root.east(2), Direction.WEST);
+        var second = level.getCapability(Capabilities.Energy.BLOCK, root.south(2), Direction.NORTH);
+        if (input == null || first == null || second == null || insertEnergy(input, 1000, false) != 160
+                || first.getAmount() + second.getAmount() != 160) {
             helper.fail("Cyclic cable network failed to deliver energy without duplication"); return;
         }
         helper.succeed();
@@ -1579,10 +1578,10 @@ public final class MachineRecipeGameTests {
         var cable = (CableBlockEntity) level.getBlockEntity(root);
         cable.setExtracting(Direction.WEST, true);
         cable.setExtracting(Direction.NORTH, true);
-        var west = level.getCapability(Capabilities.EnergyStorage.BLOCK, root, Direction.WEST);
-        var north = level.getCapability(Capabilities.EnergyStorage.BLOCK, root, Direction.NORTH);
-        int total = west.receiveEnergy(100, false) + north.receiveEnergy(100, false);
-        if (total != 160 || west.receiveEnergy(1, false) != 0) { helper.fail("Sources exceeded shared cable segment throughput"); return; }
+        var west = level.getCapability(Capabilities.Energy.BLOCK, root, Direction.WEST);
+        var north = level.getCapability(Capabilities.Energy.BLOCK, root, Direction.NORTH);
+        int total = insertEnergy(west, 100, false) + insertEnergy(north, 100, false);
+        if (total != 160 || insertEnergy(west, 1, false) != 0) { helper.fail("Sources exceeded shared cable segment throughput"); return; }
         helper.succeed();
     }
 
@@ -1593,9 +1592,9 @@ public final class MachineRecipeGameTests {
         var entity = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
         entity.inventory().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         entity.inventory().setStackInSlot(2, new ItemStack(ModItems.SPEED_UPGRADE.get(), 8));
-        entity.energy().receiveEnergy(1000, false);
+        insertEnergy(entity.energy(), 1000, false);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), entity);
-        if (entity.energy().getEnergyStored() != 960) { helper.fail("Speed upgrades changed FE/t consumption"); return; }
+        if (entity.energy().getAmount() != 960) { helper.fail("Speed upgrades changed FE/t consumption"); return; }
         helper.succeed();
     }
 
@@ -1609,30 +1608,30 @@ public final class MachineRecipeGameTests {
         level.setBlockAndUpdate(targetPos, ModMachines.EXTRACTOR.get().defaultBlockState());
         var generator = (GeneratorBlockEntity) level.getBlockEntity(sourcePos);
         var cable = (CableBlockEntity) level.getBlockEntity(cablePos);
-        var receiver = level.getCapability(Capabilities.EnergyStorage.BLOCK, targetPos, Direction.WEST);
+        var receiver = level.getCapability(Capabilities.Energy.BLOCK, targetPos, Direction.WEST);
         if (generator == null || cable == null || receiver == null) { helper.fail("Missing machine or cable"); return; }
         generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(200));
         GeneratorBlockEntity.tick(level, sourcePos, level.getBlockState(sourcePos), generator);
-        if (receiver.getEnergyStored() != 0 || generator.energy().getEnergyStored() != 200) {
+        if (receiver.getAmount() != 0 || generator.energy().getAmount() != 200) {
             helper.fail("Passive cable accepted generator push"); return;
         }
         cable.tickExtraction();
-        if (receiver.getEnergyStored() != 0 || generator.energy().getEnergyStored() != 200) {
+        if (receiver.getAmount() != 0 || generator.energy().getAmount() != 200) {
             helper.fail("Passive cable extracted energy"); return;
         }
         cable.setExtracting(Direction.WEST, true);
         cable.tickExtraction();
-        if (receiver.getEnergyStored() != 100 || generator.energy().getEnergyStored() != 100 || !cable.isExtracting(Direction.WEST)) {
+        if (receiver.getAmount() != 100 || generator.energy().getAmount() != 100 || !cable.isExtracting(Direction.WEST)) {
             helper.fail("Enabled extraction did not respect the source transfer rate"); return;
         }
         GeneratorBlockEntity.tick(level, sourcePos, level.getBlockState(sourcePos), generator);
-        if (receiver.getEnergyStored() != 100 || generator.energy().getEnergyStored() != 100) {
+        if (receiver.getAmount() != 100 || generator.energy().getAmount() != 100) {
             helper.fail("Combined push and pull exceeded the generator limit"); return;
         }
         if (cable.isExtracting(Direction.EAST)) { helper.fail("Extraction leaked to another side"); return; }
         var saved = cable.saveCustomOnly(level.registryAccess());
         var restored = new CableBlockEntity(cablePos, level.getBlockState(cablePos));
-        restored.loadCustomOnly(saved, level.registryAccess());
+        restored.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         if (!restored.isExtracting(Direction.WEST) || restored.isExtracting(Direction.EAST)) {
             helper.fail("Extraction settings failed to persist"); return;
         }
@@ -1647,10 +1646,10 @@ public final class MachineRecipeGameTests {
         var sugar = new ItemStack(Items.SUGAR);
         var redstone = new ItemStack(Items.REDSTONE);
         if (Boolean.getBoolean("woolworks.test.custom_resource")
-                && !level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).containsKey(Identifier.fromNamespaceAndPath("woolworks_test", "custom"))) {
+                && !level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY).containsKey(Identifier.fromNamespaceAndPath("woolworks_test", "custom"))) {
             helper.fail("The custom test datapack resource did not load"); return;
         }
-        for (Identifier name : level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).keySet()) {
+        for (Identifier name : level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY).keySet()) {
             if (!ResourceTypes.enabled(level, name)) continue;
             var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), name);
             var fuel = GeneratorFuels.find(level, wool);
@@ -1658,8 +1657,8 @@ public final class MachineRecipeGameTests {
                 helper.fail("Invalid default fuel for resource " + name); return;
             }
             var input = CraftingInput.of(3, 1, List.of(sugar, redstone, wool));
-            var match = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
-            if (match.isEmpty() || !match.get().value().assemble(input, level.registryAccess()).is(ModItems.SPEED_UPGRADE.get())) {
+            var match = level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, level);
+            if (match.isEmpty() || !match.get().value().assemble(input).is(ModItems.SPEED_UPGRADE.get())) {
                 helper.fail("Speed upgrade rejected resource " + name); return;
             }
         }
@@ -1667,7 +1666,7 @@ public final class MachineRecipeGameTests {
         for (ItemStack invalid : List.of(new ItemStack(Items.WHITE_WOOL), new ItemStack(ModItems.INFUSED_WOOL.get()), missing)) {
             if (GeneratorFuels.find(level, invalid).isPresent()) { helper.fail("Generator accepted invalid fuel"); return; }
             var input = CraftingInput.of(3, 1, List.of(sugar, redstone, invalid));
-            if (level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level).isPresent()) {
+            if (level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, level).isPresent()) {
                 helper.fail("Speed upgrade accepted invalid wool"); return;
             }
         }
@@ -1756,7 +1755,7 @@ public final class MachineRecipeGameTests {
         CompoundTag saved = new CompoundTag();
         saved.putInt("PendingEnergy", 37);
         saved.putInt("PendingSide", Direction.WEST.ordinal());
-        cable.loadCustomOnly(saved, level.registryAccess());
+        cable.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         var player = helper.makeMockServerPlayerInLevel();
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         player.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
@@ -1781,23 +1780,23 @@ public final class MachineRecipeGameTests {
         level.setBlockAndUpdate(pos.east(), ModMachines.EXTRACTOR.get().defaultBlockState());
         var generator = (GeneratorBlockEntity)level.getBlockEntity(pos.west());
         var cable = (CableBlockEntity)level.getBlockEntity(pos);
-        var receiver = level.getCapability(Capabilities.EnergyStorage.BLOCK, pos.east(), Direction.WEST);
+        var receiver = level.getCapability(Capabilities.Energy.BLOCK, pos.east(), Direction.WEST);
         if (generator == null || cable == null || receiver == null) { helper.fail("Missing machines"); return; }
         generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(1000));
         helper.runAfterDelay(3, () -> {
-            if (receiver.getEnergyStored() != 0 || generator.energy().getEnergyStored() != 1000) {
+            if (receiver.getAmount() != 0 || generator.energy().getAmount() != 1000) {
                 helper.fail("Passive cable accepted a pushed transfer"); return;
             }
             cable.setExtracting(Direction.WEST, true);
             helper.runAfterDelay(3, () -> {
-                int received = receiver.getEnergyStored();
-                int remaining = generator.energy().getEnergyStored();
+                long received = receiver.getAmount();
+                long remaining = generator.energy().getAmount();
                 if (received <= 0 || received + remaining != 1000) {
                     helper.fail("Active transfer lost or failed to move energy"); return;
                 }
                 cable.setExtracting(Direction.WEST, false);
                 helper.runAfterDelay(3, () -> {
-                    if (receiver.getEnergyStored() != received || generator.energy().getEnergyStored() != remaining) {
+                    if (receiver.getAmount() != received || generator.energy().getAmount() != remaining) {
                         helper.fail("Disabled extraction continued transferring energy"); return;
                     }
                     helper.succeed();
@@ -1855,7 +1854,7 @@ public final class MachineRecipeGameTests {
         CompoundTag data = new CompoundTag();
         data.putInt("PendingEnergy", 53);
         data.putInt("PendingSide", Direction.WEST.ordinal());
-        cable.loadCustomOnly(data, level.registryAccess());
+        cable.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), data));
         level.destroyBlock(pos, true);
         var drops = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
                 new net.minecraft.world.phys.AABB(pos).inflate(2), entity -> entity.getItem().is(ModMachines.CABLE_ITEM.get()));
@@ -1868,5 +1867,12 @@ public final class MachineRecipeGameTests {
             }
         }
         helper.fail("Normal cable drop lost pending energy");
+    }
+    private static long insertEnergy(net.neoforged.neoforge.transfer.energy.EnergyHandler handler, long amount, boolean simulate) {
+        try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            long inserted = handler.insert(amount, transaction);
+            if (!simulate) transaction.commit();
+            return inserted;
+        }
     }
 }
