@@ -54,7 +54,7 @@ final class ResourceSelectionScreen extends Screen {
             minecraft.level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY).entrySet().forEach(entry -> {
                 ResourceType type = entry.getValue();
                 boolean hasTag = type.requiredItemTag().map(id -> BuiltInRegistries.ITEM
-                        .getTag(TagKey.create(Registries.ITEM, id)).map(tag -> tag.iterator().hasNext()).orElse(false)).orElse(true);
+                        .get(TagKey.create(Registries.ITEM, id)).map(tag -> tag.iterator().hasNext()).orElse(false)).orElse(true);
                 if (hasTag || !type.automatic()) resources.add(new ResourceEntry(entry.getKey().location(), type, hasTag));
             });
             resources.sort(Comparator.comparing((ResourceEntry entry) -> entry.name().getString().toLowerCase(Locale.ROOT))
@@ -85,11 +85,11 @@ final class ResourceSelectionScreen extends Screen {
     private Component filterLabel() { return Component.translatable("woolworks.resources.filter." + (filterMode == 0 ? "all" : filterMode == 1 ? "enabled" : "disabled")); }
     private boolean effective(ResourceEntry entry) { return ResourceTypes.enabled(entry.id(), entry.type(), disabled.contains(entry.id().toString())); }
 
-    @Override public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(font, title, width / 2, 12, 0xffffff);
-        if (available) graphics.drawCenteredString(font, Component.translatable("woolworks.resources.restart"), width / 2, height - 48, 0xffcc55);
-        else graphics.drawWordWrap(font, Component.translatable("woolworks.resources.unavailable"), width / 2 - 150, 50, 300, 0xffffff);
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        graphics.centeredText(font, title, width / 2, 12, 0xffffffff);
+        if (available) graphics.centeredText(font, Component.translatable("woolworks.resources.restart"), width / 2, height - 48, 0xffffcc55);
+        else graphics.textWithWordWrap(font, Component.translatable("woolworks.resources.unavailable"), width / 2 - 150, 50, 300, 0xffffffff);
     }
 
     private record ResourceEntry(Identifier id, ResourceType type, boolean hasTag) {
@@ -139,14 +139,15 @@ final class ResourceSelectionScreen extends Screen {
                 return Component.translatable(disabled.contains(resource.id().toString()) ? "woolworks.resources.off" : "woolworks.resources.on");
             }
             @Override public Component getNarration() { return Component.literal(resource.name().getString() + ": ").append(label()); }
-            @Override public void render(GuiGraphicsExtractor graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovering, float partialTick) {
+            @Override public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovering, float partialTick) {
+                int left = getContentX(), top = getContentY(), width = getContentWidth();
                 var stack = ModItems.withResource(ModItems.INFUSED_WOOL.get(), resource.id());
-                graphics.renderItem(stack, left + 2, top + 2);
-                graphics.drawString(font, font.plainSubstrByWidth(resource.name().getString(), width - 117), left + 23, top + 6, 0xffffff, false);
+                graphics.item(stack, left + 2, top + 2);
+                graphics.text(font, font.plainSubstrByWidth(resource.name().getString(), width - 117), left + 23, top + 6, 0xffffffff, false);
                 toggle.setPosition(left + width - 88, top);
-                toggle.render(graphics, mouseX, mouseY, partialTick);
+                toggle.extractRenderState(graphics, mouseX, mouseY, partialTick);
             }
-            @Override public boolean mouseClicked(double mouseX, double mouseY, int button) { return toggle.mouseClicked(mouseX, mouseY, button); }
+            @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) { return toggle.mouseClicked(event, doubleClick); }
         }
     }
 }
