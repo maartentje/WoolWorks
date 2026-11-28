@@ -15,7 +15,7 @@ From the repository root, on Windows:
 .\gradlew.bat -PemptyTagGameTest runGameTestServer
 ```
 
-On macOS or Linux, use `./gradlew` instead of `gradlew.bat`. The server run uses `--nogui`. Run the fixture configurations separately: both define a salt tag. They add test-only data to the GameTest source set, not the release JAR. The production artifact is written to `build/libs/woolworks-<minecraft_version>-<mod_version>.jar`, currently `woolworks-1.21.1-1.0.0.jar`.
+On macOS or Linux, use `./gradlew` instead of `gradlew.bat`. The server run uses `--nogui`. Run the fixture configurations separately: both define a salt tag. They add test-only data to the GameTest source set, not the release JAR. The production artifact is written to `build/libs/woolworks-<minecraft_version>-<mod_version>.jar`, currently `woolworks-1.21.1-1.0.1.jar`.
 
 ModDevGradle supplies run configurations for the IDE. After changing dependencies or run configurations, reload the Gradle project and regenerate or use the Gradle run tasks if an IDE launch has a stale classpath. Development runs use the local `run/` directory; keep its worlds and configuration out of version control.
 
