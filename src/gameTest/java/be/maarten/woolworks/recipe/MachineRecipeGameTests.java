@@ -882,11 +882,11 @@ public final class MachineRecipeGameTests {
         var oldInventory = new net.neoforged.neoforge.items.ItemStackHandler(3);
         oldInventory.setStackInSlot(2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 5));
         CompoundTag data = new CompoundTag();
-        data.put("Inventory", oldInventory.serializeNBT(level.registryAccess()));
+        data.put("Inventory", legacyInventory(level, 3, 2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 5)));
         extractor.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), data));
         var recovered = extractor.saveCustomOnly(level.registryAccess()).getListOrEmpty("RecoveredUpgrades");
         if (extractor.inventory().getStackInSlot(2).getCount() != 2 || recovered.size() != 1
-                || ItemStack.parseOptional(level.registryAccess(), recovered.getCompound(0)).getCount() != 3) {
+                || ItemStack.CODEC.parse(level.registryAccess().createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE), recovered.getCompound(0).orElseThrow()).getOrThrow().getCount() != 3) {
             helper.fail("Invalid saved upgrade stack was not safely recovered"); return;
         }
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
@@ -1004,7 +1004,7 @@ public final class MachineRecipeGameTests {
                 || level.getBlockState(extractorPos).getValue(be.maarten.woolworks.machine.ExtractorBlock.FACING) != Direction.WEST) {
             helper.fail("Active state did not preserve machines and orientation"); return;
         }
-        generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(20000));
+        setGeneratorEnergy(level, generator, 20000);
         extractor.inventory().setStackInSlot(1, new ItemStack(Items.DIRT, 64));
         GeneratorBlockEntity.tick(level, generatorPos, level.getBlockState(generatorPos), generator);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, extractorPos, level.getBlockState(extractorPos), extractor);
@@ -1039,7 +1039,7 @@ public final class MachineRecipeGameTests {
         if (generator.menuData().get(1) != 500) { helper.fail("Fuel progress was not elapsed progress"); return; }
         GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.menuData().get(1) != 500 || generator.remainingFuelTicks() != 200 || generator.isProcessing()) { helper.fail("Fuel progress advanced while generator was full"); return; }
-        generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(0));
+        setGeneratorEnergy(level, generator, 0);
         GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.menuData().get(1) <= 500) { helper.fail("Fuel progress did not resume"); return; }
         saved = generator.saveCustomOnly(level.registryAccess()); saved.putInt("BurnRemaining", 1);
@@ -1061,14 +1061,7 @@ public final class MachineRecipeGameTests {
         if (cable == null || !cable.isExtracting(Direction.WEST) || cable.isExtracting(Direction.EAST) || cable.isExtracting(Direction.NORTH)) {
             helper.fail("Cable did not default only its extract-only source to extraction"); return;
         }
-        var storage = new net.neoforged.neoforge.energy.EnergyStorage(100, 100, 100);
-        var receiver = new net.neoforged.neoforge.energy.EnergyStorage(100, 100, 0);
-        var source = new net.neoforged.neoforge.energy.EnergyStorage(100, 0, 100);
-        if (be.maarten.woolworks.machine.CableBlock.defaultsToExtraction(storage)
-                || be.maarten.woolworks.machine.CableBlock.defaultsToExtraction(receiver)
-                || !be.maarten.woolworks.machine.CableBlock.defaultsToExtraction(source)) {
-            helper.fail("Generic FE source classification was incorrect"); return;
-        }
+        // External handlers no longer advertise extraction-only capability; placement defaults are tested above.
         cable.setExtracting(Direction.WEST, false);
         level.setBlockAndUpdate(pos.west(), level.getBlockState(pos.west()).setValue(be.maarten.woolworks.machine.GeneratorBlock.ACTIVE, true));
         var restored = new CableBlockEntity(pos, level.getBlockState(pos));
@@ -1076,7 +1069,7 @@ public final class MachineRecipeGameTests {
         if (cable.isExtracting(Direction.WEST) || restored.isExtracting(Direction.WEST)) { helper.fail("Manual passive setting was overwritten"); return; }
         ItemStack tagged = new ItemStack(ModMachines.CABLE_ITEM.get());
         CompoundTag data = new CompoundTag(); data.putInt("ExtractionMask", 0);
-        net.minecraft.world.item.BlockItem.setBlockEntityData(tagged, ModMachines.CABLE_ENTITY.get(), data);
+        tagged.set(DataComponents.BLOCK_ENTITY_DATA, net.minecraft.world.item.component.TypedEntityData.of(ModMachines.CABLE_ENTITY.get(), data));
         ModMachines.CABLE.get().setPlacedBy(level, pos, level.getBlockState(pos), null, tagged);
         if (cable.isExtracting(Direction.WEST)) { helper.fail("Saved explicit extraction state was overwritten"); return; }
         helper.succeed();
@@ -1156,7 +1149,7 @@ public final class MachineRecipeGameTests {
         for (Direction dir : Direction.values()) {
             var items = level.getCapability(Capabilities.Item.BLOCK, pos, dir);
             var energy = level.getCapability(Capabilities.Energy.BLOCK, pos, dir);
-            if (items == null || items.size() != 20 || energy == null || !energy.canReceive() || energy.canExtract()
+            if (items == null || items.size() != 20 || energy == null || insertEnergy(energy, 1, true) != 1 || extractEnergy(energy, 1) != 0
                     || !items.isValid(0, net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.SHEARS))) || items.isValid(2, net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.WHITE_WOOL)))) {
                 helper.fail("Worker automation failed on " + dir); return;
             }
@@ -1259,10 +1252,10 @@ public final class MachineRecipeGameTests {
         insertEnergy(worker.energy(), 1000, false);
         CompoundTag saved = worker.saveCustomOnly(level.registryAccess());
         CompoundTag plan = new CompoundTag();
-        plan.putUUID("Sheep", sheep.getUUID());
-        plan.put("Wool", new ItemStack(Items.WHITE_WOOL).save(level.registryAccess()));
+        plan.put("Sheep", net.minecraft.core.UUIDUtil.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, sheep.getUUID()).getOrThrow());
+        plan.put("Wool", encodeStack(level, new ItemStack(Items.WHITE_WOOL)));
         var drops = new net.minecraft.nbt.ListTag();
-        drops.add(new ItemStack(Items.WHITE_WOOL, 2).save(level.registryAccess()));
+        drops.add(encodeStack(level, new ItemStack(Items.WHITE_WOOL, 2)));
         plan.put("Drops", drops);
         var plans = new net.minecraft.nbt.ListTag();
         plans.add(plan);
@@ -1363,7 +1356,7 @@ public final class MachineRecipeGameTests {
         var level = helper.getLevel();
         var items = level.getCapability(Capabilities.Item.BLOCK, pos, Direction.UP);
         var energy = level.getCapability(Capabilities.Energy.BLOCK, pos, Direction.NORTH);
-        if (items == null || energy == null || energy.canReceive() || !energy.canExtract()) {
+        if (items == null || energy == null || insertEnergy(energy, 1, true) != 0) {
             helper.fail("Generator capabilities must expose insertion and extraction-only energy");
             return;
         }
@@ -1378,7 +1371,7 @@ public final class MachineRecipeGameTests {
             return;
         }
         helper.runAfterDelay(3, () -> {
-            if (energy.getAmountAsLong() <= 0 || !stackInSlot(items, 0).isEmpty()) {
+            if (energy.getAmountAsLong() <= 0 || extractEnergy(energy, 1) != 1 || !stackInSlot(items, 0).isEmpty()) {
                 helper.fail("Generator did not consume fuel and produce energy");
                 return;
             }
@@ -1394,7 +1387,7 @@ public final class MachineRecipeGameTests {
         var old = new net.neoforged.neoforge.items.ItemStackHandler(2);
         old.setStackInSlot(1, new ItemStack(Items.BUCKET));
         var save = new CompoundTag();
-        save.put("Fuel", old.serializeNBT(level.registryAccess()));
+        save.put("Fuel", legacyInventory(level, 2, 1, new ItemStack(Items.BUCKET)));
         generator.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), save));
         if (generator.fuel().getSlots() != 1 || !generator.migratedRemainder().is(Items.BUCKET)) {
             helper.fail("Legacy output was not migrated"); return;
@@ -1404,7 +1397,7 @@ public final class MachineRecipeGameTests {
         if (generator.energy().getAmountAsLong() != 16000 || !generator.fuel().getStackInSlot(0).isEmpty()) {
             helper.fail("Generator burn did not produce exactly 16000 FE"); return;
         }
-        generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(20000));
+        setGeneratorEnergy(level, generator, 20000);
         generator.fuel().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.fuel().getStackInSlot(0).isEmpty()) { helper.fail("Full generator consumed fuel"); return; }
@@ -1436,7 +1429,7 @@ public final class MachineRecipeGameTests {
         var level = helper.getLevel();
         var items = level.getCapability(Capabilities.Item.BLOCK, pos, Direction.UP);
         var energy = level.getCapability(Capabilities.Energy.BLOCK, pos, Direction.DOWN);
-        if (items == null || energy == null || energy.canExtract() || !energy.canReceive()) {
+        if (items == null || energy == null || insertEnergy(energy, 1, true) != 1 || extractEnergy(energy, 1) != 0) {
             helper.fail("Extractor capabilities are missing or incorrectly directed");
             return;
         }
@@ -1488,7 +1481,7 @@ public final class MachineRecipeGameTests {
         level.setBlockAndUpdate(end, ModMachines.EXTRACTOR.get().defaultBlockState());
         var cable = level.getCapability(Capabilities.Energy.BLOCK, start, Direction.WEST);
         var receiver = level.getCapability(Capabilities.Energy.BLOCK, end, Direction.WEST);
-        if (cable == null || cable.canReceive() || insertEnergy(cable, 1500, false) != 0) {
+        if (cable == null || insertEnergy(cable, 1500, false) != 0) {
             helper.fail("Passive cable accepted pushed energy"); return;
         }
         ((CableBlockEntity) level.getBlockEntity(start)).setExtracting(Direction.WEST, true);
@@ -1610,7 +1603,7 @@ public final class MachineRecipeGameTests {
         var cable = (CableBlockEntity) level.getBlockEntity(cablePos);
         var receiver = level.getCapability(Capabilities.Energy.BLOCK, targetPos, Direction.WEST);
         if (generator == null || cable == null || receiver == null) { helper.fail("Missing machine or cable"); return; }
-        generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(200));
+        setGeneratorEnergy(level, generator, 200);
         GeneratorBlockEntity.tick(level, sourcePos, level.getBlockState(sourcePos), generator);
         if (receiver.getAmountAsLong() != 0 || generator.energy().getAmountAsLong() != 200) {
             helper.fail("Passive cable accepted generator push"); return;
@@ -1704,12 +1697,12 @@ public final class MachineRecipeGameTests {
         var menu = player.inventoryMenu;
         menu.getSlot(1).set(wool);
         menu.getSlot(2).set(shears);
-        menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, player);
+        menu.clicked(0, 0, net.minecraft.world.inventory.ContainerInput.QUICK_MOVE, player);
         if (!menu.getSlot(2).getItem().isEmpty() || menu.getSlot(1).getItem().getCount() != 1) {
             helper.fail("Shift crafting did not stop when shears broke"); return;
         }
         int cables = 0;
-        for (ItemStack item : player.getInventory().items) if (item.is(ModMachines.CABLE_ITEM.get())) cables += item.getCount();
+        for (ItemStack item : player.getInventory().getNonEquipmentItems()) if (item.is(ModMachines.CABLE_ITEM.get())) cables += item.getCount();
         if (cables != 16) { helper.fail("Shift crafting produced " + cables + " cables instead of 16"); return; }
         helper.succeed();
     }
@@ -1764,10 +1757,10 @@ public final class MachineRecipeGameTests {
         player.setItemInHand(InteractionHand.MAIN_HAND, shears);
         player.gameMode.useItemOn(player, level, shears, InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
             if (!stack.is(ModMachines.CABLE_ITEM.get())) continue;
             var data = stack.get(DataComponents.BLOCK_ENTITY_DATA);
-            if (data != null && data.copyTag().getInt("PendingEnergy") == 37) { helper.succeed(); return; }
+            if (data != null && data.copyTagWithoutId().getIntOr("PendingEnergy", 0) == 37) { helper.succeed(); return; }
         }
         helper.fail("Pending cable energy was not preserved on pickup");
     }
@@ -1782,7 +1775,7 @@ public final class MachineRecipeGameTests {
         var cable = (CableBlockEntity)level.getBlockEntity(pos);
         var receiver = level.getCapability(Capabilities.Energy.BLOCK, pos.east(), Direction.WEST);
         if (generator == null || cable == null || receiver == null) { helper.fail("Missing machines"); return; }
-        generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(1000));
+        setGeneratorEnergy(level, generator, 1000);
         helper.runAfterDelay(3, () -> {
             if (receiver.getAmountAsLong() != 0 || generator.energy().getAmountAsLong() != 1000) {
                 helper.fail("Passive cable accepted a pushed transfer"); return;
@@ -1812,7 +1805,7 @@ public final class MachineRecipeGameTests {
         var player = helper.makeMockServerPlayerInLevel();
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         player.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
-        for (int i = 0; i < player.getInventory().items.size(); i++) player.getInventory().items.set(i, new ItemStack(Items.STONE, 64));
+        for (int i = 0; i < player.getInventory().getNonEquipmentItems().size(); i++) player.getInventory().getNonEquipmentItems().set(i, new ItemStack(Items.STONE, 64));
         var shears = new ItemStack(Items.SHEARS);
         player.setItemInHand(InteractionHand.MAIN_HAND, shears);
         player.setShiftKeyDown(true);
@@ -1860,7 +1853,7 @@ public final class MachineRecipeGameTests {
                 new net.minecraft.world.phys.AABB(pos).inflate(2), entity -> entity.getItem().is(ModMachines.CABLE_ITEM.get()));
         for (var entity : drops) {
             var component = entity.getItem().get(DataComponents.BLOCK_ENTITY_DATA);
-            if (component != null && component.copyTag().getInt("PendingEnergy") == 53) {
+            if (component != null && component.copyTagWithoutId().getIntOr("PendingEnergy", 0) == 53) {
                 entity.discard();
                 helper.succeed();
                 return;
@@ -1896,5 +1889,29 @@ public final class MachineRecipeGameTests {
     private static ItemStack stackInSlot(net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> handler, int slot) {
         var resource = handler.getResource(slot);
         return resource.isEmpty() ? ItemStack.EMPTY : resource.toStack(Math.toIntExact(handler.getAmountAsLong(slot)));
+    }
+
+    private static long extractEnergy(net.neoforged.neoforge.transfer.energy.EnergyHandler handler, int amount) {
+        try (var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            return handler.extract(amount, tx);
+        }
+    }
+    private static void setGeneratorEnergy(net.minecraft.server.level.ServerLevel level, GeneratorBlockEntity generator, int amount) {
+        var saved = generator.saveCustomOnly(level.registryAccess());
+        saved.putInt("Energy", amount);
+        generator.loadCustomOnly(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
+    }
+    private static net.minecraft.nbt.Tag encodeStack(net.minecraft.server.level.ServerLevel level, ItemStack stack) {
+        return ItemStack.CODEC.encodeStart(level.registryAccess().createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE), stack).getOrThrow();
+    }
+    private static CompoundTag legacyInventory(net.minecraft.server.level.ServerLevel level, int size, int slot, ItemStack stack) {
+        var data = new CompoundTag();
+        data.putInt("Size", size);
+        var entry = (CompoundTag) encodeStack(level, stack);
+        entry.putInt("Slot", slot);
+        var entries = new net.minecraft.nbt.ListTag();
+        entries.add(entry);
+        data.put("Items", entries);
+        return data;
     }
 }
