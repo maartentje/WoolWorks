@@ -53,12 +53,4 @@ public class WorkerBlock extends BaseEntityBlock {
     @Nullable @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(type, ModMachines.WORKER_ENTITY.get(), WorkerBlockEntity::tick);
     }
-    @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState next, boolean moving) {
-        if (!state.is(next.getBlock()) && level instanceof ServerLevel && level.getBlockEntity(pos) instanceof WorkerBlockEntity worker)
-            for (int i = 0; i < worker.inventory().getSlots(); i++) {
-                var stack = worker.inventory().getStackInSlot(i);
-                if (!stack.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
-            }
-        super.onRemove(state, level, pos, next, moving);
-    }
 }
