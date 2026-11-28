@@ -13,10 +13,10 @@ import snownee.jade.api.config.IPluginConfig;
 @WailaPlugin
 public final class WoolWorksJade implements IWailaPlugin {
     @Override public void register(IWailaCommonRegistration registration) {
-        registration.registerBlockDataProvider(Blocks.INSTANCE, GeneratorBlockEntity.class);
-        registration.registerBlockDataProvider(Blocks.INSTANCE, ExtractorBlockEntity.class);
-        registration.registerBlockDataProvider(Blocks.INSTANCE, WorkerBlockEntity.class);
-        registration.registerBlockDataProvider(Blocks.INSTANCE, CableBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, GeneratorBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, ExtractorBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, WorkerBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, CableBlockEntity.class);
     }
     @Override public void registerClient(IWailaClientRegistration registration) {
         registration.registerBlockComponent(Blocks.INSTANCE, GeneratorBlock.class);
@@ -28,7 +28,7 @@ public final class WoolWorksJade implements IWailaPlugin {
     private static Identifier id(String name) { return Identifier.fromNamespaceAndPath(WoolWorks.MODID, name); }
     private static String seconds(long ticks) { return String.format(Locale.ROOT, "%.1f", ticks / 20.0); }
 
-    private enum Blocks implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private enum BlockData implements IServerDataProvider<BlockAccessor> {
         INSTANCE;
         @Override public Identifier getUid() { return id("machine_information"); }
         @Override public void appendServerData(CompoundTag tag, BlockAccessor accessor) {
@@ -54,6 +54,10 @@ public final class WoolWorksJade implements IWailaPlugin {
                 tag.putInt("ww_rate", MachineConfig.CABLE_TRANSFER_RATE.get());
             }
         }
+    }
+    private enum Blocks implements IBlockComponentProvider {
+        INSTANCE;
+        @Override public Identifier getUid() { return id("machine_information"); }
         @Override public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
             CompoundTag tag = accessor.getServerData();
             String kind = tag.getString("ww_kind").orElse("");
