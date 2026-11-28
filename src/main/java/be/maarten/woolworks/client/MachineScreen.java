@@ -26,7 +26,7 @@ public class MachineScreen extends AbstractContainerScreen<MachineMenu> {
         return lines;
     }
 
-    @Override protected void extractBackground(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int x = leftPos, y = topPos;
         graphics.fill(x, y, x + imageWidth, y + imageHeight, 0xFF373737);
         graphics.fill(x + 1, y + 1, x + imageWidth - 1, y + imageHeight - 1, 0xFFC6C6C6);
