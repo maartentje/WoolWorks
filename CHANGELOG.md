@@ -4,6 +4,8 @@ All notable changes to Wool Works will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.0] - Minecraft 26.1.2
+
 ### Compatibility
 
 - Port Wool Works to Minecraft 26.1.2, NeoForge 26.1.2.130 and Java 25, including transactional item and energy capabilities, updated rendering, and optional JEI and Jade integrations.
@@ -18,7 +20,7 @@ All notable changes to Wool Works will be documented in this file.
 
 - Update recipe ingredients to item/tag strings and the `neoforge:ingredient_type` discriminator. Existing 1.21.1 overrides must be adapted; resource and recipe IDs remain unchanged.
 
-## [1.0.0]
+## [1.0.0] - Minecraft 1.21.1
 
 First stable release for Minecraft 1.21.1 (NeoForge).
 
