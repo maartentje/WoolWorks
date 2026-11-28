@@ -26,25 +26,9 @@ public class GeneratorBlockEntity extends MufflableBlockEntity {
     private int generationRate;
     private int burnTotal;
     private boolean processing;
-    private long lastExtractionTick = Long.MIN_VALUE;
-    private int extractedThisTick;
 
-    private final MachineEnergy energy = new MachineEnergy(CAPACITY, 0, OUTPUT_PER_TICK) {
-        @Override public int extractEnergy(int amount, boolean simulate) {
-            if (level == null || level.isClientSide() || amount <= 0) return 0;
-            long tick = level.getGameTime();
-            if (lastExtractionTick != tick) {
-                lastExtractionTick = tick;
-                extractedThisTick = 0;
-            }
-            int extracted = super.extractEnergy(Math.min(amount, OUTPUT_PER_TICK - extractedThisTick), simulate);
-            if (extracted > 0 && !simulate) {
-                extractedThisTick += extracted;
-                setChanged();
-            }
-            return extracted;
-        }
-    };
+    private final MachineEnergy energy = new MachineEnergy(CAPACITY, 0, OUTPUT_PER_TICK,
+            () -> level != null && !level.isClientSide(), () -> level == null ? Long.MIN_VALUE : level.getGameTime(), this::setChanged);
 
     private ItemStack migratedRemainder = ItemStack.EMPTY;
     private final MachineInventory fuel = new MachineInventory(1) {
@@ -54,7 +38,7 @@ public class GeneratorBlockEntity extends MufflableBlockEntity {
     private final net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation = fuel.automation(1, slot -> slot == 0, slot -> false);
 
     public GeneratorBlockEntity(BlockPos pos, BlockState state) { super(ModMachines.GENERATOR_ENTITY.get(), pos, state, false); }
-    public EnergyStorage energy() { return energy; }
+    public net.neoforged.neoforge.transfer.energy.EnergyHandler energy() { return energy; }
     public MachineInventory fuel() { return fuel; }
     public ItemStack migratedRemainder() { return migratedRemainder; }
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation() { return automation; }
@@ -127,20 +111,16 @@ public class GeneratorBlockEntity extends MufflableBlockEntity {
                     level.setBlock(pos, current.setValue(GeneratorBlock.ACTIVE, false), 3);
             }
         }
-        int remainingOutput = OUTPUT_PER_TICK;
         for (Direction direction : Direction.values()) {
-            if (remainingOutput == 0 || energy.getEnergyStored() == 0) break;
+            int offered = energy.availableOutput();
+            if (offered == 0) break;
             BlockPos targetPos = pos.relative(direction);
             if (!level.hasChunkAt(targetPos)) continue;
-            var target = level.getCapability(Capabilities.EnergyStorage.BLOCK, targetPos, direction.getOpposite());
-            if (target == null || !target.canReceive()) continue;
-            int offered = energy.extractEnergy(remainingOutput, true);
-            int accepted = target.receiveEnergy(offered, true);
-            if (accepted <= 0) continue;
-            int transferred = target.receiveEnergy(Math.min(offered, accepted), false);
-            if (transferred > 0) {
-                energy.extractEnergy(transferred, false);
-                remainingOutput -= transferred;
+            var target = level.getCapability(Capabilities.Energy.BLOCK, targetPos, direction.getOpposite());
+            if (target == null) continue;
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                int accepted = target.insert(offered, transaction);
+                if (accepted > 0 && energy.extract(accepted, transaction) == accepted) transaction.commit();
             }
         }
     }
@@ -160,7 +140,7 @@ public class GeneratorBlockEntity extends MufflableBlockEntity {
         migratedRemainder = in.keySet().contains("MigratedRemainder") ? in.read("MigratedRemainder", ItemStack.CODEC).orElseThrow(() -> new IllegalStateException("Unreadable MigratedRemainder")) : ItemStack.EMPTY;
         if (migratedRemainder.isEmpty()) migratedRemainder = old.getStackInSlot(1).copy();
         fuel.setStackInSlot(0, old.getStackInSlot(0).copy());
-        energy.setStored(in.getIntOr("Energy", 0));
+        energy.load(in);
         remainingBurn = Math.max(0, in.getIntOr("BurnRemaining", 0));
         generationRate = Math.max(0, in.getIntOr("GenerationRate", 0));
         burnTotal = Math.max(remainingBurn, in.getIntOr("BurnTotal", 0));

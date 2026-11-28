@@ -37,11 +37,11 @@ public final class ModMachines {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CableBlockEntity>> CABLE_ENTITY = BLOCK_ENTITIES.register("wool_insulated_cable", () -> new BlockEntityType<>(CableBlockEntity::new, CABLE.get()));
 
     public static void capabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, GENERATOR_ENTITY.get(), (entity, side) -> entity.energy());
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, GENERATOR_ENTITY.get(), (entity, side) -> entity.energy());
         event.registerBlockEntity(Capabilities.Item.BLOCK, GENERATOR_ENTITY.get(), (entity, side) -> entity.automation());
-        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, EXTRACTOR_ENTITY.get(), (entity, side) -> entity.energy());
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, EXTRACTOR_ENTITY.get(), (entity, side) -> entity.energy());
         event.registerBlockEntity(Capabilities.Item.BLOCK, EXTRACTOR_ENTITY.get(), (entity, side) -> entity.automation());
-        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, WORKER_ENTITY.get(), (entity, side) -> entity.energy());
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, WORKER_ENTITY.get(), (entity, side) -> entity.energy());
         event.registerBlockEntity(Capabilities.Item.BLOCK, WORKER_ENTITY.get(), (entity, side) -> entity.automation());
         event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, entity, side) -> CableNetworks.port(level, pos, side), CABLE.get());
     }

@@ -41,14 +41,8 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
     }
     private final List<ItemStack> recoveredUpgrades = new ArrayList<>();
 
-    private final MachineEnergy energy = new MachineEnergy(CAPACITY, CAPACITY, 0) {
-        @Override public int receiveEnergy(int amount, boolean simulate) {
-            if (level == null || level.isClientSide() || amount <= 0) return 0;
-            int received = super.receiveEnergy(amount, simulate);
-            if (received > 0 && !simulate) setChanged();
-            return received;
-        }
-    };
+    private final MachineEnergy energy = new MachineEnergy(CAPACITY, CAPACITY, 0,
+            () -> level != null && !level.isClientSide(), () -> level == null ? Long.MIN_VALUE : level.getGameTime(), this::setChanged);
     private final MachineInventory inventory = new MachineInventory(3) {
         @Override protected boolean accepts(int slot, ItemStack stack) {
             if (slot == 2) return ExtractorUpgradeItem.limit(stack) > 0;
@@ -60,7 +54,7 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
     private final net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation = inventory.automation(2, slot -> slot == 0, slot -> slot == 1);
 
     public ExtractorBlockEntity(BlockPos pos, BlockState state) { super(ModMachines.EXTRACTOR_ENTITY.get(), pos, state, false); }
-    public EnergyStorage energy() { return energy; }
+    public net.neoforged.neoforge.transfer.energy.EnergyHandler energy() { return energy; }
     public MachineInventory inventory() { return inventory; }
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation() { return automation; }
     public boolean isProcessing() { return processing; }
@@ -177,7 +171,7 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
             recoveredUpgrades.add(installed.copyWithCount(installed.getCount() - limit));
             inventory.setStackInSlot(2, limit == 0 ? ItemStack.EMPTY : installed.copyWithCount(limit));
         }
-        energy.setStored(in.getIntOr("Energy", 0)); halfProgress = Math.max(0, in.getLongOr("HalfProgress", 0));
+        energy.load(in); halfProgress = Math.max(0, in.getLongOr("HalfProgress", 0));
         recipeId = in.getStringOr("Recipe", ""); recipeDuration = in.getIntOr("RecipeDuration", 0); recipeEnergy = in.getIntOr("RecipeEnergy", 0);
         recipeInput = readStack(in, "RecipeInput"); recipeResult = readStack(in, "RecipeResult"); recipeUpgrade = readStack(in, "RecipeUpgrade");
     }

@@ -36,13 +36,8 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
     private record PendingShearing(ItemStack wool, List<ItemStack> drops) {}
     private final Map<UUID, PendingShearing> pendingDrops = new HashMap<>();
     public static final int RUNNING = 0, MISSING_INPUTS = 1, INSUFFICIENT_ENERGY = 2, OUTPUT_FULL = 3;
-    private final MachineEnergy energy = new MachineEnergy(CAPACITY, Integer.MAX_VALUE, 0) {
-        @Override public int receiveEnergy(int amount, boolean simulate) {
-            int result = super.receiveEnergy(amount, simulate);
-            if (!simulate && result > 0) setChanged();
-            return result;
-        }
-    };
+    private final MachineEnergy energy = new MachineEnergy(CAPACITY, Integer.MAX_VALUE, 0,
+            () -> level != null && !level.isClientSide(), () -> level == null ? Long.MIN_VALUE : level.getGameTime(), this::setChanged);
     private final MachineInventory inventory = new MachineInventory(20) {
         @Override protected boolean accepts(int slot, ItemStack stack) { return slot == 0 ? isShears(stack) : slot == 1 && stack.is(Items.WHEAT); }
         @Override protected int limit(int slot, ItemStack stack) { return slot == 0 ? 1 : super.limit(slot, stack); }
@@ -58,7 +53,7 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
     public static boolean isShears(ItemStack stack) { return stack.canPerformAction(ItemAbilities.SHEARS_HARVEST); }
     public MachineInventory inventory() { return inventory; }
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation() { return automation; }
-    public EnergyStorage energy() { return energy; }
+    public net.neoforged.neoforge.transfer.energy.EnergyHandler energy() { return energy; }
     public int area() { return area; }
     public int remainingOperationTicks() { return Math.max(0, MachineConfig.WORKER_INTERVAL.get() - Math.max(0, operationProgress)); }
     public static int regrowthCost() { return Math.min(MachineConfig.WORKER_REGROWTH_COST.get(), CAPACITY); }
@@ -221,7 +216,7 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
     @Override protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
         super.loadAdditional(in);
         if (in.keySet().contains("Inventory")) inventory.deserialize(in.child("Inventory").orElseThrow(() -> new IllegalStateException("Unreadable worker inventory")));
-        energy.setStored(in.getIntOr("Energy", 0));
+        energy.load(in);
         int saved = in.getIntOr("Area", 0); area = saved == 11 ? 9 : saved >= 1 && saved <= 9 && (saved & 1) == 1 ? saved : 3;
         rotation = in.getIntOr("Rotation", 0); operationProgress = in.getInt("OperationProgress").map(v -> Math.max(0, v)).orElse(-1);
         pendingDrops.clear();
