@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "woolworks:wool_generator",
+    "woolworks:wool_extractor",
+    "woolworks:wool_worker"
+  ]
+}
