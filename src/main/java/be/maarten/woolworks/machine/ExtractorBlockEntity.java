@@ -1,9 +1,10 @@
 package be.maarten.woolworks.machine;
 
-import be.maarten.woolworks.recipe.ModRecipes;
+import be.maarten.woolworks.recipe.MachineRecipeLookup;
 import be.maarten.woolworks.registry.ModItems;
 import be.maarten.woolworks.item.ExtractorUpgradeItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
@@ -51,7 +52,7 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
     private final ItemStackHandler inventory = new ItemStackHandler(3) {
         @Override public boolean isItemValid(int slot, ItemStack stack) {
             if (slot == 2) return ExtractorUpgradeItem.limit(stack) > 0;
-            return slot == 0 && level != null && level.getRecipeManager().getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(stack), level).isPresent();
+            return slot == 0 && level instanceof ServerLevel server && MachineRecipeLookup.serverExtraction(server, stack).isPresent();
         }
         @Override protected int getStackLimit(int slot, ItemStack stack) { return slot == 2 ? Math.min(stack.getMaxStackSize(), ExtractorUpgradeItem.limit(stack)) : super.getStackLimit(slot, stack); }
         @Override protected void onContentsChanged(int slot) { setChanged(); }
@@ -121,19 +122,19 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
         dropRecovered();
         var input = inventory.getStackInSlot(0);
         if (input.isEmpty()) { resetProgress(); recipeEnergy = 0; oversizedOutput = false; return false; }
-        var match = level.getRecipeManager().getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(input), level);
+        var match = MachineRecipeLookup.serverExtraction((ServerLevel) level, input);
         if (match.isEmpty()) { resetProgress(); recipeEnergy = 0; oversizedOutput = false; return false; }
         var holder = match.get();
         var recipe = holder.value();
-        var result = recipe.assemble(new SingleRecipeInput(input), level.registryAccess());
+        var result = recipe.assemble(new SingleRecipeInput(input));
         if (result.isEmpty()) { resetProgress(); recipeEnergy = 0; oversizedOutput = false; return false; }
         ItemStack upgrade = inventory.getStackInSlot(2);
         var stats = ExtractorUpgradeItem.effective(upgrade);
-        if (!recipeId.equals(holder.id().toString()) || recipeDuration != recipe.duration() || recipeEnergy != recipe.energyPerTick()
+        if (!recipeId.equals(holder.id().identifier().toString()) || recipeDuration != recipe.duration() || recipeEnergy != recipe.energyPerTick()
                 || !ItemStack.isSameItemSameComponents(recipeInput, input) || !ItemStack.matches(recipeResult, result)
                 || !ItemStack.matches(recipeUpgrade, upgrade)) {
             halfProgress = 0;
-            recipeId = holder.id().toString();
+            recipeId = holder.id().identifier().toString();
             recipeDuration = recipe.duration();
             recipeEnergy = recipe.energyPerTick();
             recipeInput = input.copyWithCount(1);

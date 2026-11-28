@@ -1,1 +1,1 @@
-{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:copper","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:copper_ingot"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:copper"}}}}
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:copper","recipe":{"ingredients":["minecraft:wheat","minecraft:copper_ingot"],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:copper"}}}}

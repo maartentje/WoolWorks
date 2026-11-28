@@ -1,4 +1,4 @@
-// Wool Works / KubeJS 7 / NeoForge 1.21.1 manual tests.
+// Wool Works / NeoForge 26.1.2 port examples; KubeJS compatibility is unverified.
 // Choose exactly one case; "none" changes nothing. See examples/README.md.
 const WOOLWORKS_TEST = 'none'
 
@@ -9,9 +9,9 @@ ServerEvents.recipes(event => {
       type: 'minecraft:crafting_shaped',
       pattern: ['CCC', 'CFC', 'WWW'],
       key: {
-        C: { item: 'minecraft:copper_ingot' },
-        F: { item: 'minecraft:furnace' },
-        W: { tag: 'minecraft:wool' }
+        C: 'minecraft:copper_ingot',
+        F: 'minecraft:furnace',
+        W: '#minecraft:wool'
       },
       result: { id: 'woolworks:wool_generator', count: 1 }
     }).id('woolworks_test:generator_crafting')
@@ -32,7 +32,7 @@ ServerEvents.recipes(event => {
       type: 'woolworks:resource_conditional_crafting',
       required_resource: 'woolworks:tin',
       recipe: {
-        ingredients: [{ item: 'minecraft:wheat' }, { tag: 'c:storage_blocks/tin' }],
+        ingredients: ['minecraft:wheat', '#c:storage_blocks/tin'],
         result: {
           id: 'woolworks:resource_feed', count: 1,
           components: { 'woolworks:resource_type': 'woolworks:tin' }
@@ -49,7 +49,7 @@ ServerEvents.recipes(event => {
     const recipe = {
       type: 'woolworks:wool_extraction',
       ingredient: {
-        type: 'neoforge:components', items: 'woolworks:infused_wool',
+        'neoforge:ingredient_type': 'neoforge:components', items: 'woolworks:infused_wool',
         components: { 'woolworks:resource_type': 'woolworks:tin' }
       },
       duration: 200, energy_per_tick: 40, required_resource: 'woolworks:tin'

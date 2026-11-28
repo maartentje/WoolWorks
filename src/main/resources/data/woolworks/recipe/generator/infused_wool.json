@@ -1,1 +1,1 @@
-{"type":"woolworks:generator_fuel","ingredient":{"type":"woolworks:infused_wool"},"burn_ticks":400,"energy_per_tick":40}
+{"type":"woolworks:generator_fuel","ingredient":{"neoforge:ingredient_type":"woolworks:infused_wool"},"burn_ticks":400,"energy_per_tick":40}

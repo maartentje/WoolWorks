@@ -178,6 +178,8 @@ The published 1.21.1 AE2 tag files use `c:gems/certus_quartz` and `c:gems/fluix`
 
 ## Custom Feed and extraction recipes
 
+**26.1.2 port in progress:** these target-format examples have not been runtime-tested. Existing 1.21.1 overrides must change ingredient objects such as `{"item":"minecraft:wheat"}` to `"minecraft:wheat"`, and `{"tag":"c:ingots/tin"}` to `"#c:ingots/tin"`. Custom ingredient objects use `"neoforge:ingredient_type"` instead of `"type"`; top-level recipe `"type"` is unchanged. Review external datapacks and KubeJS scripts before upgrading; recipe IDs and resource components remain unchanged.
+
 Recipes are standard datapack resources under `data/<namespace>/recipe/`, and can be replaced by another datapack at the same ID. For example, the existing Feed and extraction IDs for iron are `woolworks:iron_feed` and `woolworks:extraction/iron`. Replacing one does not require replacing the other.
 
 For the `example:ruby` definition above, `data/example/recipe/ruby_feed.json` can use the existing conditional shapeless serializer. This example uses a diamond as its ingredient, so it needs no other mod:
@@ -187,7 +189,7 @@ For the `example:ruby` definition above, `data/example/recipe/ruby_feed.json` ca
   "type": "woolworks:resource_conditional_crafting",
   "required_resource": "example:ruby",
   "recipe": {
-    "ingredients": [{"item": "minecraft:wheat"}, {"item": "minecraft:diamond"}],
+    "ingredients": ["minecraft:wheat", "minecraft:diamond"],
     "result": {
       "id": "woolworks:resource_feed",
       "count": 1,
@@ -203,7 +205,7 @@ Add `data/example/recipe/extraction/ruby.json` to extract one diamond from that 
 {
   "type": "woolworks:wool_extraction",
   "ingredient": {
-    "type": "neoforge:components",
+    "neoforge:ingredient_type": "neoforge:components",
     "items": "woolworks:infused_wool",
     "components": {"woolworks:resource_type": "example:ruby"}
   },
@@ -226,7 +228,7 @@ ServerEvents.recipes(event => {
 })
 ```
 
-The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also shows raw-JSON replacements for Tin Feed and extraction. Enable one case at a time; see its [instructions](../examples/README.md). Basic KubeJS recipe customization and datapack customization have been manually compatibility-tested, as have Almost Unified and selected FE/item automation setups. Exact scripts, mod versions, load orders and every possible override combination have not all been verified; test your own pack and inspect logs after changes.
+The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also shows raw-JSON replacements for Tin Feed and extraction. Enable one case at a time; see its [instructions](../examples/README.md). Earlier manual compatibility testing applied to the 1.21.1 version, not this unfinished 26.1.2 port. Target KubeJS, datapack and integration behavior has not been verified; test your own pack and inspect logs after the port builds.
 
 ## Other machine configuration and recipes
 

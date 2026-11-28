@@ -1,1 +1,1 @@
-{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:redstone","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:redstone"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:redstone"}}}}
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:redstone","recipe":{"ingredients":["minecraft:wheat","minecraft:redstone"],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:redstone"}}}}

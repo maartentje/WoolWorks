@@ -4,6 +4,10 @@ All notable changes to Wool Works will be documented in this file.
 
 ## [Unreleased]
 
+### Modpack customization
+
+- For the in-progress 26.1.2 port, migrate built-in recipe ingredients to target item/tag strings and the `neoforge:ingredient_type` discriminator. Custom datapack and KubeJS recipe overrides using 1.21.1 ingredient syntax must be updated; target runtime compatibility is not yet verified.
+
 ## [1.0.0]
 
 First stable release for Minecraft 1.21.1 (NeoForge).

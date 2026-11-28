@@ -1,6 +1,7 @@
 {
   "pack": {
-    "pack_format": 48,
-    "description": "Wool Works custom Echo Shard resource example (Minecraft 1.21.1)"
+    "min_format": [101, 1],
+    "max_format": [101, 1],
+    "description": "Wool Works custom Echo Shard resource example (Minecraft 26.1.2)"
   }
 }
