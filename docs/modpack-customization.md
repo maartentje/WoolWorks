@@ -228,7 +228,7 @@ ServerEvents.recipes(event => {
 })
 ```
 
-The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also shows raw-JSON replacements for Tin Feed and extraction. Enable one case at a time; see its [instructions](../examples/README.md). Earlier manual compatibility testing applied to the 1.21. The examples target 26.1.2; KubeJS integration has not been verified on this version. Test your own pack and inspect logs.
+The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also shows raw-JSON replacements for Tin Feed and extraction. Enable one case at a time; see its [instructions](../examples/README.md). Earlier manual KubeJS compatibility testing applied to Minecraft 1.21.1. The examples target 26.1.2; KubeJS integration has not been verified on this version. Test your own pack and inspect logs.
 
 ## Other machine configuration and recipes
 
