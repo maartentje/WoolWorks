@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.Packet;
@@ -56,17 +58,17 @@ public class CableBlockEntity extends BlockEntity {
         if (level != null && !level.isClientSide) CableNetworks.setExtraction(level, worldPosition, false);
         super.setRemoved();
     }
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    @Override protected void saveAdditional(ValueOutput tag) {
+        super.saveAdditional(tag);
         tag.putInt("ExtractionMask", extractionMask);
         tag.putInt("PendingEnergy", pendingEnergy);
         tag.putInt("PendingSide", pendingSide);
     }
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        extractionMask = tag.getInt("ExtractionMask") & 63;
-        pendingEnergy = Math.max(0, tag.getInt("PendingEnergy"));
-        pendingSide = Math.clamp(tag.getInt("PendingSide"), 0, 5);
+    @Override protected void loadAdditional(ValueInput tag) {
+        super.loadAdditional(tag);
+        extractionMask = tag.getIntOr("ExtractionMask", 0) & 63;
+        pendingEnergy = Math.max(0, tag.getIntOr("PendingEnergy", 0));
+        pendingSide = Math.clamp(tag.getIntOr("PendingSide", 0), 0, 5);
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return saveCustomOnly(registries); }
     @Nullable @Override public Packet<ClientGamePacketListener> getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }

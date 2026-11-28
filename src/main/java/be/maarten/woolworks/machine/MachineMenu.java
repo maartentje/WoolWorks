@@ -32,7 +32,7 @@ public class MachineMenu extends AbstractContainerMenu {
         return new MachineMenu(id, player, true, entity.inventory(), entity.menuData(), ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos()));
     }
 
-    private MachineMenu(int id, Inventory player, boolean extractor, ItemStackHandler items, ContainerData data, ContainerLevelAccess access) {
+    private MachineMenu(int id, Inventory player, boolean extractor, net.neoforged.neoforge.items.IItemHandler items, ContainerData data, ContainerLevelAccess access) {
         super(extractor ? ModMachines.EXTRACTOR_MENU.get() : ModMachines.GENERATOR_MENU.get(), id);
         this.extractor = extractor;
         this.machineSlots = extractor ? 3 : 1;
@@ -82,7 +82,7 @@ public class MachineMenu extends AbstractContainerMenu {
         } else if (!moveItemStackTo(stack, 0, 1, false)) {
             return ItemStack.EMPTY;
         }
-        if (stack.isEmpty()) slot.set(ItemStack.EMPTY); else slot.setChanged();
+        slot.set(stack.isEmpty() ? ItemStack.EMPTY : stack);
         slot.onTake(player, stack);
         return original;
     }

@@ -18,7 +18,7 @@ public class WorkerMenu extends AbstractContainerMenu {
     private final ContainerData data;
     public static WorkerMenu client(int id, Inventory player) { return new WorkerMenu(id, player, new ItemStackHandler(20), new SimpleContainerData(8), null, ContainerLevelAccess.NULL); }
     public static WorkerMenu server(int id, Inventory player, WorkerBlockEntity worker) { return new WorkerMenu(id, player, worker.inventory(), worker.data(), worker, ContainerLevelAccess.create(worker.getLevel(), worker.getBlockPos())); }
-    private WorkerMenu(int id, Inventory player, ItemStackHandler items, ContainerData data, WorkerBlockEntity worker, ContainerLevelAccess access) {
+    private WorkerMenu(int id, Inventory player, net.neoforged.neoforge.items.IItemHandler items, ContainerData data, WorkerBlockEntity worker, ContainerLevelAccess access) {
         super(ModMachines.WORKER_MENU.get(), id);
         this.worker = worker; this.access = access; this.data = data;
         addSlot(new SlotItemHandler(items, 0, 29, 25) { @Override public boolean mayPlace(ItemStack stack) { return WorkerBlockEntity.isShears(stack); } @Override public int getMaxStackSize() { return 1; } });
@@ -42,7 +42,7 @@ public class WorkerMenu extends AbstractContainerMenu {
         else if (WorkerBlockEntity.isShears(stack)) { if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY; }
         else if (stack.is(Items.WHEAT)) { if (!moveItemStackTo(stack, 1, 2, false)) return ItemStack.EMPTY; }
         else return ItemStack.EMPTY;
-        if (stack.isEmpty()) slot.set(ItemStack.EMPTY); else slot.setChanged();
+        slot.set(stack.isEmpty() ? ItemStack.EMPTY : stack);
         slot.onTake(player, stack); return result;
     }
 }

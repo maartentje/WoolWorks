@@ -41,39 +41,32 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
     }
     private final List<ItemStack> recoveredUpgrades = new ArrayList<>();
 
-    private final EnergyStorage energy = new EnergyStorage(CAPACITY, CAPACITY, 0) {
+    private final MachineEnergy energy = new MachineEnergy(CAPACITY, CAPACITY, 0) {
         @Override public int receiveEnergy(int amount, boolean simulate) {
-            if (level == null || level.isClientSide || amount <= 0) return 0;
+            if (level == null || level.isClientSide() || amount <= 0) return 0;
             int received = super.receiveEnergy(amount, simulate);
             if (received > 0 && !simulate) setChanged();
             return received;
         }
     };
-    private final ItemStackHandler inventory = new ItemStackHandler(3) {
-        @Override public boolean isItemValid(int slot, ItemStack stack) {
+    private final MachineInventory inventory = new MachineInventory(3) {
+        @Override protected boolean accepts(int slot, ItemStack stack) {
             if (slot == 2) return ExtractorUpgradeItem.limit(stack) > 0;
             return slot == 0 && level instanceof ServerLevel server && MachineRecipeLookup.serverExtraction(server, stack).isPresent();
         }
-        @Override protected int getStackLimit(int slot, ItemStack stack) { return slot == 2 ? Math.min(stack.getMaxStackSize(), ExtractorUpgradeItem.limit(stack)) : super.getStackLimit(slot, stack); }
-        @Override protected void onContentsChanged(int slot) { setChanged(); }
+        @Override protected int limit(int slot, ItemStack stack) { return slot == 2 && !stack.isEmpty() ? Math.min(stack.getMaxStackSize(), ExtractorUpgradeItem.limit(stack)) : super.limit(slot, stack); }
+        @Override protected void onContentsChanged(int slot, ItemStack previous) { setChanged(); }
     };
-    private final IItemHandler automation = new IItemHandler() {
-        @Override public int getSlots() { return 2; }
-        @Override public ItemStack getStackInSlot(int slot) { return inventory.getStackInSlot(slot); }
-        @Override public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) { return slot == 0 ? inventory.insertItem(0, stack, simulate) : stack; }
-        @Override public ItemStack extractItem(int slot, int amount, boolean simulate) { return slot == 1 ? inventory.extractItem(1, amount, simulate) : ItemStack.EMPTY; }
-        @Override public int getSlotLimit(int slot) { return inventory.getSlotLimit(slot); }
-        @Override public boolean isItemValid(int slot, ItemStack stack) { return slot == 0 && inventory.isItemValid(0, stack); }
-    };
+    private final net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation = inventory.automation(2, slot -> slot == 0, slot -> slot == 1);
 
     public ExtractorBlockEntity(BlockPos pos, BlockState state) { super(ModMachines.EXTRACTOR_ENTITY.get(), pos, state, false); }
     public EnergyStorage energy() { return energy; }
-    public ItemStackHandler inventory() { return inventory; }
-    public IItemHandler automation() { return automation; }
+    public MachineInventory inventory() { return inventory; }
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation() { return automation; }
     public boolean isProcessing() { return processing; }
     public int progressPermille() { return recipeDuration > 0 && !recipeId.isEmpty() ? (int)Math.min(1000L, halfProgress * 1000L / (2L * recipeDuration)) : 0; }
     public void dropRecovered() {
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide()) return;
         for (ItemStack stack : recoveredUpgrades) net.minecraft.world.Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), stack);
         if (!recoveredUpgrades.isEmpty()) { recoveredUpgrades.clear(); setChanged(); }
     }
@@ -101,7 +94,7 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, ExtractorBlockEntity entity) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             boolean processing = entity.tickServer(level);
             entity.processing = processing;
             BlockState current = level.getBlockState(pos);
@@ -153,7 +146,7 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
         int units = (int)Math.min(remaining, stats.halfSpeed());
         long cost = (long)recipe.energyPerTick() * stats.energyMultiplier();
         if (cost > energy.getEnergyStored()) return false;
-        energy.deserializeNBT(level.registryAccess(), IntTag.valueOf(energy.getEnergyStored() - (int)cost));
+        energy.setStored(energy.getEnergyStored() - (int)cost);
         halfProgress += units;
         if (halfProgress >= 2L * recipe.duration()) {
             inventory.extractItem(0, 1, false);
@@ -165,43 +158,30 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
         setChanged();
         return true;
     }
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Inventory", inventory.serializeNBT(registries));
-        tag.putInt("Energy", energy.getEnergyStored());
-        tag.putLong("HalfProgress", halfProgress);
-        tag.putString("Recipe", recipeId);
-        tag.putInt("RecipeDuration", recipeDuration);
-        tag.putInt("RecipeEnergy", recipeEnergy);
-        if (!recipeInput.isEmpty()) tag.put("RecipeInput", recipeInput.save(registries));
-        if (!recipeResult.isEmpty()) tag.put("RecipeResult", recipeResult.save(registries));
-        if (!recipeUpgrade.isEmpty()) tag.put("RecipeUpgrade", recipeUpgrade.save(registries));
-        ListTag recovery = new ListTag();
-        for (ItemStack stack : recoveredUpgrades) if (!stack.isEmpty()) recovery.add(stack.save(registries));
-        if (!recovery.isEmpty()) tag.put("RecoveredUpgrades", recovery);
+    @Override protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
+        super.saveAdditional(out); inventory.serialize(out.child("Inventory"));
+        out.putInt("Energy", energy.getEnergyStored()); out.putLong("HalfProgress", halfProgress);
+        out.putString("Recipe", recipeId); out.putInt("RecipeDuration", recipeDuration); out.putInt("RecipeEnergy", recipeEnergy);
+        if (!recipeInput.isEmpty()) out.store("RecipeInput", ItemStack.CODEC, recipeInput);
+        if (!recipeResult.isEmpty()) out.store("RecipeResult", ItemStack.CODEC, recipeResult);
+        if (!recipeUpgrade.isEmpty()) out.store("RecipeUpgrade", ItemStack.CODEC, recipeUpgrade);
+        if (!recoveredUpgrades.isEmpty()) out.store("RecoveredUpgrades", ItemStack.CODEC.listOf(), recoveredUpgrades);
     }
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        inventory.deserializeNBT(registries, tag.getCompound("Inventory"));
+    @Override protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
+        super.loadAdditional(in);
+        if (in.keySet().contains("Inventory")) inventory.deserialize(in.child("Inventory").orElseThrow(() -> new IllegalStateException("Unreadable extractor inventory")));
         recoveredUpgrades.clear();
-        ListTag recovery = tag.getList("RecoveredUpgrades", 10);
-        for (int i = 0; i < recovery.size(); i++) {
-            ItemStack stack = ItemStack.parseOptional(registries, recovery.getCompound(i));
-            if (!stack.isEmpty()) recoveredUpgrades.add(stack);
-        }
-        ItemStack installed = inventory.getStackInSlot(2);
-        int limit = ExtractorUpgradeItem.limit(installed);
+        if (in.keySet().contains("RecoveredUpgrades")) recoveredUpgrades.addAll(in.read("RecoveredUpgrades", ItemStack.CODEC.listOf()).orElseThrow(() -> new IllegalStateException("Unreadable recovered upgrades")));
+        ItemStack installed = inventory.getStackInSlot(2); int limit = ExtractorUpgradeItem.limit(installed);
         if (!installed.isEmpty() && installed.getCount() > limit) {
             recoveredUpgrades.add(installed.copyWithCount(installed.getCount() - limit));
             inventory.setStackInSlot(2, limit == 0 ? ItemStack.EMPTY : installed.copyWithCount(limit));
         }
-        energy.deserializeNBT(registries, IntTag.valueOf(Math.clamp(tag.getInt("Energy"), 0, CAPACITY)));
-        halfProgress = Math.max(0L, tag.getLong("HalfProgress"));
-        recipeId = tag.getString("Recipe");
-        recipeDuration = tag.getInt("RecipeDuration");
-        recipeEnergy = tag.getInt("RecipeEnergy");
-        recipeInput = ItemStack.parseOptional(registries, tag.getCompound("RecipeInput"));
-        recipeResult = ItemStack.parseOptional(registries, tag.getCompound("RecipeResult"));
-        recipeUpgrade = ItemStack.parseOptional(registries, tag.getCompound("RecipeUpgrade"));
+        energy.setStored(in.getIntOr("Energy", 0)); halfProgress = Math.max(0, in.getLongOr("HalfProgress", 0));
+        recipeId = in.getStringOr("Recipe", ""); recipeDuration = in.getIntOr("RecipeDuration", 0); recipeEnergy = in.getIntOr("RecipeEnergy", 0);
+        recipeInput = readStack(in, "RecipeInput"); recipeResult = readStack(in, "RecipeResult"); recipeUpgrade = readStack(in, "RecipeUpgrade");
+    }
+    private static ItemStack readStack(net.minecraft.world.level.storage.ValueInput in, String key) {
+        return in.keySet().contains(key) ? in.read(key, ItemStack.CODEC).orElseThrow(() -> new IllegalStateException("Unreadable " + key)) : ItemStack.EMPTY;
     }
 }
