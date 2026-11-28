@@ -32,9 +32,9 @@ public final class MachineCategories {
         @Override public void draw(RecipeHolder<GeneratorFuelRecipe> holder, IRecipeSlotsView slots, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
             var recipe = holder.value();
             var font = Minecraft.getInstance().font;
-            graphics.drawString(font, recipe.burnTicks() + " ticks", 30, 4, 0x404040, false);
-            graphics.drawString(font, recipe.energyPerTick() + " FE/t", 30, 17, 0x404040, false);
-            graphics.drawString(font, ((long)recipe.burnTicks() * recipe.energyPerTick()) + " FE total", 30, 30, 0x404040, false);
+            graphics.text(font, recipe.burnTicks() + " ticks", 30, 4, 0xFF404040, false);
+            graphics.text(font, recipe.energyPerTick() + " FE/t", 30, 17, 0xFF404040, false);
+            graphics.text(font, ((long)recipe.burnTicks() * recipe.energyPerTick()) + " FE total", 30, 30, 0xFF404040, false);
         }
     }
 
@@ -52,8 +52,8 @@ public final class MachineCategories {
         @Override public void draw(RecipeHolder<WoolExtractionRecipe> holder, IRecipeSlotsView slots, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
             var recipe = holder.value();
             var font = Minecraft.getInstance().font;
-            graphics.drawString(font, recipe.duration() + " ticks", 30, 4, 0x404040, false);
-            graphics.drawString(font, recipe.energyPerTick() + " FE/t", 30, 17, 0x404040, false);
+            graphics.text(font, recipe.duration() + " ticks", 30, 4, 0xFF404040, false);
+            graphics.text(font, recipe.energyPerTick() + " FE/t", 30, 17, 0xFF404040, false);
         }
     }
 }
