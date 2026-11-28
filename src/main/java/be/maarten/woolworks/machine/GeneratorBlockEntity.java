@@ -146,4 +146,15 @@ public class GeneratorBlockEntity extends MufflableBlockEntity {
         burnTotal = Math.max(remainingBurn, in.getIntOr("BurnTotal", 0));
         inactiveTicks = Math.clamp(in.getIntOr("InactiveTicks", 0), 0, 40);
     }
+
+    @Override public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level instanceof net.minecraft.server.level.ServerLevel) {
+            for (int i = 0; i < fuel().getSlots(); i++) {
+                var stack = fuel().getStackInSlot(i);
+                if (!stack.isEmpty()) net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+            }
+            if (!migratedRemainder().isEmpty()) net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), migratedRemainder().copy());
+        }
+    }
 }
