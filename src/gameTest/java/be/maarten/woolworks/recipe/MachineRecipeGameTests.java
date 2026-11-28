@@ -176,7 +176,7 @@ public final class MachineRecipeGameTests {
         var ordinary = net.minecraft.world.entity.EntityType.SHEEP.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
         iron.setResourceId(Identifier.parse("woolworks:iron")); iron.setAge(-12000); iron.setSheared(true);
         iron.setCustomName(Component.literal("Conversion test")); iron.setCustomNameVisible(true); iron.setNoAi(true); iron.setPersistenceRequired();
-        iron.setHealth(4); iron.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SPEED, 1000));
+        iron.setInvulnerable(true); iron.setHealth(4); iron.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SPEED, 1000));
         missing.setResourceId(Identifier.parse("test:missing"));
         optional.setResourceId(Identifier.parse("woolworks:osmium"));
         valid.setResourceId(Identifier.parse(Boolean.getBoolean("woolworks.test.osmium") ? "woolworks_test:tagged_custom" : "woolworks:coal"));
@@ -192,7 +192,7 @@ public final class MachineRecipeGameTests {
                 if (!iron.isRemoved() || !missing.isRemoved() || !optional.isRemoved() || valid.isRemoved() || ordinary.isRemoved()
                         || converted == null || converted.getType() != net.minecraft.world.entity.EntityType.SHEEP || converted.getColor() != net.minecraft.world.item.DyeColor.WHITE
                         || !converted.isBaby() || !converted.isSheared() || !converted.isCustomNameVisible() || !converted.isPersistenceRequired()
-                        || !converted.isNoAi() || !converted.isNoGravity() || converted.getHealth() != 4 || !converted.hasEffect(net.minecraft.world.effect.MobEffects.SPEED)
+                        || !converted.isNoAi() || !converted.isNoGravity() || !converted.isInvulnerable() || converted.getHealth() != 4 || !converted.hasEffect(net.minecraft.world.effect.MobEffects.SPEED)
                         || converted.getLeashHolder() != ordinary
                         || sheep.size() != 5 || !level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds).isEmpty()) {
                     helper.fail("Conversion details: removed iron/missing/optional=" + iron.isRemoved() + "/" + missing.isRemoved() + "/" + optional.isRemoved()
