@@ -1,1 +1,0 @@
-{"type":"woolworks:wool_extraction","ingredient":{"type":"neoforge:components","items":"woolworks:infused_wool","components":{"woolworks:resource_type":"woolworks:netherite"}},"result":{"id":"minecraft:netherite_scrap","count":1},"duration":800,"energy_per_tick":40,"required_resource":"woolworks:netherite"}

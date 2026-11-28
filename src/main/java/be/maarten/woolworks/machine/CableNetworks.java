@@ -28,7 +28,7 @@ public final class CableNetworks {
 
     public static void invalidate(Level level) {
         NetworkState state = STATES.get(level);
-        if (state != null) state.routes.clear();
+        if (state != null) state.invalidateRoutes();
     }
 
     public static void setExtraction(Level level, BlockPos pos, boolean active) {
@@ -89,13 +89,31 @@ public final class CableNetworks {
         finally { ROUTING.remove(); }
     }
 
-    private record Route(BlockPos cable, List<BlockPos> path) {}
-    private static final class NetworkState {
+    record Route(BlockPos cable, List<BlockPos> path) {}
+    static final class NetworkState {
         final Map<BlockPos, List<Route>> routes = new HashMap<>();
         final Map<BlockPos, Integer> used = new HashMap<>();
         final Set<BlockPos> active = new HashSet<>();
         long tick = Long.MIN_VALUE;
+        long topologyVersion;
         int rotation;
+
+        void invalidateRoutes() {
+            topologyVersion++;
+            routes.clear();
+        }
+    }
+
+    /** Do not cache or use a topology invalidated while it was being discovered. */
+    static List<Route> cachedRoutes(NetworkState state, BlockPos root, java.util.function.Supplier<List<Route>> discover) {
+        BlockPos key = root.immutable();
+        List<Route> cached = state.routes.get(key);
+        if (cached != null) return cached;
+        long version = state.topologyVersion;
+        List<Route> discovered = discover.get();
+        if (version != state.topologyVersion) return null;
+        state.routes.put(key, discovered);
+        return discovered;
     }
 
     private static List<Route> routes(Level level, BlockPos root) {
@@ -142,13 +160,16 @@ public final class CableNetworks {
     private static int transfer(Level level, BlockPos root, Direction side, int requested, boolean simulate) {
         NetworkState state = STATES.computeIfAbsent(level, ignored -> new NetworkState());
         if (state.tick != level.getGameTime()) { state.tick = level.getGameTime(); state.used.clear(); }
-        List<Route> routes = state.routes.computeIfAbsent(root.immutable(), key -> routes(level, key));
+        List<Route> routes = cachedRoutes(state, root, () -> routes(level, root));
+        if (routes == null) return 0;
+        long version = state.topologyVersion;
         for (Route route : routes) {
             if (!level.hasChunkAt(route.cable()) || !level.getBlockState(route.cable()).is(ModMachines.CABLE.get())) {
-                state.routes.clear();
+                state.invalidateRoutes();
                 return 0;
             }
         }
+        if (version != state.topologyVersion) return 0;
         Map<BlockPos, Integer> usage = simulate ? new HashMap<>(state.used) : state.used;
         int limit = MachineConfig.CABLE_TRANSFER_RATE.get();
         BlockPos source = side == null ? null : root.relative(side);

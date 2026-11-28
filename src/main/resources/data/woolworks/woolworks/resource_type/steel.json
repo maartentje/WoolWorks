@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.steel","color":6778228,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/steel","automatic":true}
+{"translation_key":"resource.woolworks.steel","color":6778228,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/steel","automatic":true,"category":"alloys"}

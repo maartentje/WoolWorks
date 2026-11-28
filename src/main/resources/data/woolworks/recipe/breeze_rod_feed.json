@@ -1,0 +1,1 @@
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:breeze_rod","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:breeze_rod"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:breeze_rod"}}}}

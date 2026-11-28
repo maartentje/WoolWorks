@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.sapphire","color":2643642,"min_yield":1,"max_yield":3,"required_item_tag":"c:gems/sapphire","automatic":true}
+{"translation_key":"resource.woolworks.sapphire","color":2643642,"min_yield":1,"max_yield":3,"required_item_tag":"c:gems/sapphire","automatic":true,"category":"gems_crystals"}

@@ -1,0 +1,1 @@
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:ghast_tear","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:ghast_tear"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:ghast_tear"}}}}

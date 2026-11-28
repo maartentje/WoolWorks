@@ -18,7 +18,11 @@ public final class ResourceTypes {
     }
 
     public static boolean enabled(ResourceLocation id, ResourceType type) {
-        return type.enabled() && !be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES.get().contains(id.toString())
+        return enabled(id, type, be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES.get().contains(id.toString()));
+    }
+
+    public static boolean enabled(ResourceLocation id, ResourceType type, boolean individuallyDisabled) {
+        return type.enabled() && type.category().enabled() && !individuallyDisabled
                 && (!type.automatic() || be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES.get())
                 && type.requiredItemTag().map(tag -> net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tag))
                 .map(items -> items.iterator().hasNext()).orElse(false)).orElse(true);

@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.iesnium","color":7228060,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/iesnium","automatic":true}
+{"translation_key":"resource.woolworks.iesnium","color":7228060,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/iesnium","automatic":true,"category":"metals"}

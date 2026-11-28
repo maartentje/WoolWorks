@@ -1,0 +1,1 @@
+{"type":"woolworks:wool_extraction","ingredient":{"type":"neoforge:components","items":"woolworks:infused_wool","components":{"woolworks:resource_type":"woolworks:ender_pearl"}},"result":{"id":"minecraft:ender_pearl","count":1},"duration":200,"energy_per_tick":40,"required_resource":"woolworks:ender_pearl"}

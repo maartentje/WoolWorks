@@ -58,7 +58,7 @@ The Wool Works advancement tab offers an in-game guide. JEI is helpful for looki
 
 ## Modded materials and compatibility
 
-Wool Works automatically enables supported materials from installed mods when their common item tags are available. No specific resource mod is required. Resource availability can also be configured; see the [Modpack Author Guide](docs/modpack-customization.md) for details.
+Wool Works includes 38 vanilla resource types and automatically enables up to 128 supported modded materials when their item tags are available (166 total). No specific resource mod is required. Server settings can disable individual resources or entire categories: Metals, Alloys, Gems & Crystals, Materials, Mob Drops, and Essences. The in-game resource editor supports search and effective-state filters; see the [Modpack Author Guide](docs/modpack-customization.md) for details.
 
 [JEI](https://github.com/mezz/JustEnoughItems) can show recipes and resource variants. [Jade](https://github.com/Snownee/Jade) can show machine and sheep information; detailed machine data on a dedicated server requires Jade on both server and client. Both integrations are optional.
 

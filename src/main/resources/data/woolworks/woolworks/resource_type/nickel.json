@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.nickel","color":11841674,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/nickel","automatic":true}
+{"translation_key":"resource.woolworks.nickel","color":11841674,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/nickel","automatic":true,"category":"metals"}

@@ -33,6 +33,7 @@ final class ResourceSelectionScreen extends Screen {
     private EditBox search;
     private ResourceList list;
     private boolean available;
+    private int filterMode;
 
     ResourceSelectionScreen(Screen parent, List<String> disabled, Consumer<List<String>> save) {
         super(Component.translatable("woolworks.resources.title"));
@@ -58,11 +59,16 @@ final class ResourceSelectionScreen extends Screen {
             });
             resources.sort(Comparator.comparing((ResourceEntry entry) -> entry.name().getString().toLowerCase(Locale.ROOT))
                     .thenComparing(entry -> entry.id().toString()));
-            search = new EditBox(font, width / 2 - 150, 33, 300, 20, Component.translatable("woolworks.resources.search"));
+            search = new EditBox(font, width / 2 - 150, 33, 190, 20, Component.translatable("woolworks.resources.search"));
             search.setHint(Component.translatable("woolworks.resources.search"));
             list = new ResourceList(minecraft, width, height - 112, 57, 25);
             search.setResponder(value -> list.filter(value));
             addRenderableWidget(search);
+            addRenderableWidget(Button.builder(filterLabel(), button -> {
+                filterMode = (filterMode + 1) % 3;
+                button.setMessage(filterLabel());
+                list.filter(search.getValue());
+            }).bounds(width / 2 + 44, 33, 106, 20).tooltip(Tooltip.create(Component.translatable("woolworks.resources.filter.tooltip"))).build());
             addRenderableWidget(list);
             list.filter("");
         }
@@ -75,6 +81,9 @@ final class ResourceSelectionScreen extends Screen {
     }
 
     @Override public void onClose() { minecraft.setScreen(parent); }
+
+    private Component filterLabel() { return Component.translatable("woolworks.resources.filter." + (filterMode == 0 ? "all" : filterMode == 1 ? "enabled" : "disabled")); }
+    private boolean effective(ResourceEntry entry) { return ResourceTypes.enabled(entry.id(), entry.type(), disabled.contains(entry.id().toString())); }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
@@ -94,6 +103,7 @@ final class ResourceSelectionScreen extends Screen {
             clearEntries();
             String needle = query.toLowerCase(Locale.ROOT);
             resources.stream().filter(entry -> entry.name().getString().toLowerCase(Locale.ROOT).contains(needle))
+                    .filter(entry -> filterMode == 0 || effective(entry) == (filterMode == 1))
                     .forEach(entry -> addEntry(new Row(entry)));
             setScrollAmount(0);
         }
@@ -108,10 +118,14 @@ final class ResourceSelectionScreen extends Screen {
                     String id = resource.id().toString();
                     if (!disabled.remove(id)) disabled.add(id);
                     button.setMessage(label());
+                    if (filterMode != 0) ResourceSelectionScreen.this.list.filter(search.getValue());
                 }).size(86, 20).build();
                 if (!resource.type().enabled() || !resource.hasTag()) {
                     toggle.active = false;
                     toggle.setTooltip(Tooltip.create(Component.translatable(resource.hasTag() ? "woolworks.resources.restricted" : "woolworks.resources.missing_tag")));
+                } else if (!resource.type().category().enabled()) {
+                    toggle.active = false;
+                    toggle.setTooltip(Tooltip.create(Component.translatable("woolworks.resources.category", Component.translatable("woolworks.category." + resource.type().category().getSerializedName()))));
                 } else if (global) {
                     toggle.active = false;
                     toggle.setTooltip(Tooltip.create(Component.translatable("woolworks.resources.global")));
@@ -119,6 +133,7 @@ final class ResourceSelectionScreen extends Screen {
             }
             private Component label() {
                 if (!resource.type().enabled() || !resource.hasTag()) return Component.translatable("woolworks.resources.restricted_state");
+                if (!resource.type().category().enabled()) return Component.translatable("woolworks.resources.category_state");
                 if (resource.type().automatic() && !MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES.get())
                     return Component.translatable("woolworks.resources.global_state");
                 return Component.translatable(disabled.contains(resource.id().toString()) ? "woolworks.resources.off" : "woolworks.resources.on");

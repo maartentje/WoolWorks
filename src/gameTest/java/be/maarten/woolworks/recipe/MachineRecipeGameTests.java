@@ -253,16 +253,69 @@ public final class MachineRecipeGameTests {
                 helper.fail("Empty salt tag enabled a resource or recipe"); return;
             }
         }
-        String[] metals = "osmium tin silver lead zinc uranium nickel platinum aluminum titanium tungsten iridium cobalt bismuth iesnium steel bronze brass electrum invar constantan cupronickel signalum lumium enderium stainless_steel refined_obsidian".split(" ");
-        String[] gems = "ruby sapphire peridot topaz fluorite certus_quartz fluix apatite".split(" ");
+        String[] metals = "osmium tin silver lead zinc uranium nickel platinum aluminum titanium tungsten iridium cobalt bismuth iesnium steel bronze brass electrum invar constantan cupronickel signalum lumium enderium stainless_steel refined_obsidian refined_glowstone allthemodium vibranium unobtainium conductive_alloy dark_steel end_steel energetic_alloy pulsating_alloy redstone_alloy soularium vibrant_alloy manasteel terrasteel elementium soulium_ingot hop_graphite fiery_ingot ironwood knightmetal steeleaf azure_electrum azure_silver blaze_gold crimson_iron crimson_steel".split(" ");
+        String[] gems = "ruby sapphire peridot topaz fluorite certus_quartz fluix apatite mana_diamond mana_pearl".split(" ");
         String[] dusts = "sulfur salt".split(" ");
+        String[] materials = "inferium_essence prudentium_essence tertium_essence imperium_essence supremium_essence prosperity_shard uraninite energized_steel blazing_crystal niotic_crystal spirited_crystal nitro_crystal sky_stone".split(" ");
+        String[] additional = "aquamarine jade opal garnet onyx amber malachite tourmaline alexandrite tanzanite spinel citrine moonstone sunstone ametrine ammolite black_diamond iolite kunzite kyanite cinnabar black_quartz pyrite monazite coke compressed_iron yellorium graphite source_gem arcane_crystal arcane_gold dragonyst dark_gem cloggrum froststeel forgotten_metal draconium awakened_draconium rubber boron_ingot enriched_iron quartz_enriched_iron quartz_enriched_copper spirit_attuned_gem dimensional_shard utherium desh ostrum calorite".split(" ");
+        var additionalTags = java.util.Map.ofEntries(
+                java.util.Map.entry("aquamarine", "c:gems/aquamarine"),
+                java.util.Map.entry("jade", "c:gems/jade"),
+                java.util.Map.entry("opal", "c:gems/opal"),
+                java.util.Map.entry("garnet", "c:gems/garnet"),
+                java.util.Map.entry("onyx", "c:gems/onyx"),
+                java.util.Map.entry("amber", "c:gems/amber"),
+                java.util.Map.entry("malachite", "c:gems/malachite"),
+                java.util.Map.entry("tourmaline", "c:gems/tourmaline"),
+                java.util.Map.entry("alexandrite", "c:gems/alexandrite"),
+                java.util.Map.entry("tanzanite", "c:gems/tanzanite"),
+                java.util.Map.entry("spinel", "c:gems/spinel"),
+                java.util.Map.entry("citrine", "c:gems/citrine"),
+                java.util.Map.entry("moonstone", "c:gems/moonstone"),
+                java.util.Map.entry("sunstone", "c:gems/sunstone"),
+                java.util.Map.entry("ametrine", "c:gems/ametrine"),
+                java.util.Map.entry("ammolite", "c:gems/ammolite"),
+                java.util.Map.entry("black_diamond", "c:gems/black_diamond"),
+                java.util.Map.entry("iolite", "c:gems/iolite"),
+                java.util.Map.entry("kunzite", "c:gems/kunzite"),
+                java.util.Map.entry("kyanite", "c:gems/kyanite"),
+                java.util.Map.entry("cinnabar", "c:gems/cinnabar"),
+                java.util.Map.entry("black_quartz", "c:gems/black_quartz"),
+                java.util.Map.entry("pyrite", "c:ingots/pyrite"),
+                java.util.Map.entry("monazite", "c:dusts/monazite"),
+                java.util.Map.entry("coke", "woolworks:materials/coke"),
+                java.util.Map.entry("compressed_iron", "c:ingots/compressed_iron"),
+                java.util.Map.entry("yellorium", "c:ingots/yellorium"),
+                java.util.Map.entry("graphite", "c:ingots/graphite"),
+                java.util.Map.entry("source_gem", "c:gems/source"),
+                java.util.Map.entry("arcane_crystal", "c:gems/arcane_crystal"),
+                java.util.Map.entry("arcane_gold", "c:ingots/arcane_gold"),
+                java.util.Map.entry("dragonyst", "c:dusts/dragonyst"),
+                java.util.Map.entry("dark_gem", "woolworks:materials/dark_gem"),
+                java.util.Map.entry("cloggrum", "c:ingots/cloggrum"),
+                java.util.Map.entry("froststeel", "c:ingots/froststeel"),
+                java.util.Map.entry("forgotten_metal", "c:ingots/forgotten_metal"),
+                java.util.Map.entry("draconium", "c:ingots/draconium"),
+                java.util.Map.entry("awakened_draconium", "c:ingots/draconium_awakened"),
+                java.util.Map.entry("rubber", "woolworks:materials/rubber"),
+                java.util.Map.entry("boron_ingot", "woolworks:materials/boron_ingot"),
+                java.util.Map.entry("enriched_iron", "woolworks:materials/enriched_iron"),
+                java.util.Map.entry("quartz_enriched_iron", "woolworks:materials/quartz_enriched_iron"),
+                java.util.Map.entry("quartz_enriched_copper", "woolworks:materials/quartz_enriched_copper"),
+                java.util.Map.entry("spirit_attuned_gem", "woolworks:materials/spirit_attuned_gem"),
+                java.util.Map.entry("dimensional_shard", "woolworks:materials/dimensional_shard"),
+                java.util.Map.entry("utherium", "woolworks:materials/utherium"),
+                java.util.Map.entry("desh", "woolworks:materials/desh"),
+                java.util.Map.entry("ostrum", "woolworks:materials/ostrum"),
+                java.util.Map.entry("calorite", "woolworks:materials/calorite"));
+        String[] standalone = "silicon".split(" ");
         try {
             automatic.set(true); disabled.set(List.of());
             var seen = new java.util.HashSet<ResourceLocation>();
-            for (var group : List.of(java.util.Map.entry("ingots", metals), java.util.Map.entry("gems", gems), java.util.Map.entry("dusts", dusts))) {
+            for (var group : List.of(java.util.Map.entry("ingots", metals), java.util.Map.entry("gems", gems), java.util.Map.entry("dusts", dusts), java.util.Map.entry("materials", materials), java.util.Map.entry("standalone", standalone), java.util.Map.entry("additional", additional))) {
                 for (String name : group.getValue()) {
                     var id = ResourceLocation.parse("woolworks:" + name);
-                    var tagId = ResourceLocation.parse("c:" + group.getKey() + "/" + name);
+                    var tagId = ResourceLocation.parse(group.getKey().equals("additional") ? additionalTags.get(name) : group.getKey().equals("standalone") ? "c:" + name : (group.getKey().equals("materials") ? "woolworks:" : "c:") + group.getKey() + "/" + (name.equals("soulium_ingot") ? "soulium" : name.equals("fiery_ingot") ? "fiery" : name));
                     var type = registry.get(id);
                     if (!seen.add(id) || type == null || !type.automatic() || !type.requiredItemTag().equals(java.util.Optional.of(tagId))
                             || type.color() < 0 || type.color() > 0xffffff || !net.minecraft.locale.Language.getInstance().has(type.translationKey())) {
@@ -296,7 +349,7 @@ public final class MachineRecipeGameTests {
                     automatic.set(true);
                 }
             }
-            if (seen.size() != 37) { helper.fail("Unexpected optional catalogue size: " + seen.size()); return; }
+            if (seen.size() != 128) { helper.fail("Unexpected optional catalogue size: " + seen.size()); return; }
             var amethyst = ResourceLocation.parse("woolworks:amethyst");
             var amethystInput = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.AMETHYST_SHARD)));
             var amethystWool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), amethyst);
@@ -308,6 +361,27 @@ public final class MachineRecipeGameTests {
                     || !amethystExtraction.matches(new SingleRecipeInput(amethystWool), level) || !amethystExtraction.assemble(new SingleRecipeInput(amethystWool), level.registryAccess()).is(Items.AMETHYST_SHARD)) {
                 helper.fail("Amethyst or vanilla unavailable with automatic resources off"); return;
             }
+            for (String name : "netherite_scrap echo_shard prismarine_shard prismarine_crystals glowstone_dust flint clay_ball ender_pearl blaze_rod breeze_rod slimeball magma_cream ghast_tear phantom_membrane bone string gunpowder spider_eye leather feather rotten_flesh shulker_shell rabbit_hide rabbits_foot ink_sac glow_ink_sac turtle_scute armadillo_scute".split(" ")) {
+                var id = ResourceLocation.parse("woolworks:" + name);
+                var itemName = name.equals("slimeball") ? "slime_ball" : name.equals("rabbits_foot") ? "rabbit_foot" : name;
+                var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ResourceLocation.parse("minecraft:" + itemName));
+                var type = registry.get(id);
+                var input = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(item)));
+                var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
+                var feed = (net.minecraft.world.item.crafting.CraftingRecipe) level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:" + name + "_feed")).orElseThrow().value();
+                var extraction = (WoolExtractionRecipe) level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/" + name)).orElseThrow().value();
+                if (item == Items.AIR || type == null || type.automatic() || !net.minecraft.locale.Language.getInstance().has(type.translationKey())
+                        || !ResourceTypes.enabled(level, id) || !feed.matches(input, level)
+                        || !id.equals(feed.assemble(input, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
+                        || !extraction.matches(new SingleRecipeInput(wool), level) || !extraction.assemble(new SingleRecipeInput(wool), level.registryAccess()).is(item)) {
+                    helper.fail("Vanilla catalogue failed: " + id); return;
+                }
+                disabled.set(List.of(id.toString()));
+                if (ResourceTypes.enabled(level, id) || feed.matches(input, level) || extraction.matches(new SingleRecipeInput(wool), level)) { helper.fail("Vanilla disabling failed: " + id); return; }
+                disabled.set(List.of());
+            }
+            if (registry.get(ResourceLocation.parse("woolworks:netherite")) != null || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:netherite_feed")).isPresent()
+                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/netherite")).isPresent()) { helper.fail("Old Netherite resource remains"); return; }
             var custom = ResourceLocation.parse("woolworks_test:tagged_custom");
             if (fixture && !ResourceTypes.enabled(level, custom)) { helper.fail("Custom tagged resource disabled by global switch"); return; }
             disabled.set(List.of(amethyst.toString(), custom.toString()));
@@ -315,6 +389,52 @@ public final class MachineRecipeGameTests {
                     || (fixture && ResourceTypes.enabled(level, custom))) { helper.fail("Amethyst or custom resource disabling failed"); return; }
         } finally { automatic.set(oldAutomatic); disabled.set(oldDisabled); }
         helper.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "category_restrictions")
+    public static void categoryRestrictions(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var registry = level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY);
+        var metals = be.maarten.woolworks.machine.MachineConfig.ENABLE_METALS;
+        var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
+        var disabled = be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES;
+        var oldMetals = metals.get(); var oldAuto = automatic.get(); var oldDisabled = disabled.get();
+        var iron = ResourceLocation.parse("woolworks:iron"); var osmium = ResourceLocation.parse("woolworks:osmium");
+        try {
+            metals.set(true); automatic.set(true); disabled.set(List.of());
+            var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:ingots/osmium"));
+            boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false);
+            if (!ResourceTypes.enabled(level, iron) || ResourceTypes.enabled(level, osmium) != present) { helper.fail("Initial availability wrong"); return; }
+            if (registry.get(ResourceLocation.parse("woolworks:charged_certus_quartz")) != null || registry.get(ResourceLocation.parse("woolworks:certus_quartz")) == null
+                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:charged_certus_quartz_feed")).isPresent()
+                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/charged_certus_quartz")).isPresent()) { helper.fail("Certus catalogue incorrect"); return; }
+            var json = com.google.gson.JsonParser.parseString("{\"translation_key\":\"test.custom\",\"color\":1,\"min_yield\":1,\"max_yield\":1}");
+            var custom = be.maarten.woolworks.resource.ResourceType.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow();
+            if (custom.category() != be.maarten.woolworks.resource.ResourceCategory.MATERIALS) { helper.fail("Default category incorrect"); return; }
+            disabled.set(List.of("woolworks:iron")); metals.set(false);
+            if (ResourceTypes.enabled(level, iron) || ResourceTypes.enabled(level, osmium)) { helper.fail("Category restriction failed"); return; }
+            metals.set(true);
+            if (ResourceTypes.enabled(level, iron) || ResourceTypes.enabled(level, osmium) != present || !disabled.get().contains("woolworks:iron")) { helper.fail("Individual setting not preserved"); return; }
+            disabled.set(List.of()); automatic.set(false);
+            if (!ResourceTypes.enabled(level, iron) || ResourceTypes.enabled(level, osmium)) { helper.fail("Automatic restriction not independent"); return; }
+        } finally { metals.set(oldMetals); automatic.set(oldAuto); disabled.set(oldDisabled); }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "category_conversion")
+    public static void categorySheepConversion(GameTestHelper helper) {
+        var metals = be.maarten.woolworks.machine.MachineConfig.ENABLE_METALS;
+        var old = metals.get(); metals.set(false);
+        var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(helper.getLevel());
+        var pos = helper.absolutePos(BlockPos.ZERO);
+        sheep.setResourceId(ResourceLocation.parse("woolworks:iron")); sheep.moveTo(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5); sheep.setNoAi(true);
+        helper.getLevel().addFreshEntity(sheep);
+        helper.runAfterDelay(3, () -> {
+            try {
+                if (!sheep.isRemoved() || helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.Sheep.class, new net.minecraft.world.phys.AABB(pos).inflate(3)).stream().noneMatch(s -> s.getType() == net.minecraft.world.entity.EntityType.SHEEP)) { helper.fail("Category-disabled sheep did not convert"); return; }
+            } finally { metals.set(old); }
+            helper.succeed();
+        });
     }
 
     @GameTest(template = "empty")

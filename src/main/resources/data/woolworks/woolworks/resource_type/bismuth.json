@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.bismuth","color":13143446,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/bismuth","automatic":true}
+{"translation_key":"resource.woolworks.bismuth","color":13143446,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/bismuth","automatic":true,"category":"metals"}

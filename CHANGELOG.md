@@ -4,6 +4,10 @@ All notable changes to Wool Works will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed a cable-network crash when its route cache is invalidated during route discovery.
+
 ## [1.0.0]
 
 First stable release for Minecraft 1.21.1 (NeoForge).
@@ -13,6 +17,18 @@ First stable release for Minecraft 1.21.1 (NeoForge).
 - Raise Resource Sheep for Infused Wool, with configurable vanilla and automatically detected modded resources.
 - Automate wool production, resource extraction and FE generation with Wool Works machines and cables.
 - Customize production with upgrades, tools, datapacks and optional JEI and Jade integrations.
+- Replace the Netherite resource with Netherite Scrap; its feed uses scrap rather than an ingot. Sheep using the old alpha resource ID are treated as invalid.
+- Add vanilla materials and mob drops as Resource Sheep types.
+- Include 38 vanilla and up to 128 optional modded resource types (166 total), including additional gems, industrial materials, magic resources and dimensional metals.
+- Group resources into configurable categories, with effective-state filters in the individual resource editor. Correct Vibranium, Inferium and Prudentium colors.
+- Automatically detect Refined Glowstone through its common ingot tag.
+- Automatically detect Allthemodium, Vibranium, Unobtainium and supported Ender IO alloys through common ingot tags.
+- Automatically detect Botania's Manasteel, Terrasteel, Elementium, Mana Diamond and Mana Pearl through common tags.
+- Automatically detect Mystical Agriculture's five core essences, Prosperity Shard and Soulium Ingot.
+- Automatically detect HOP Graphite and Twilight Forest ingots through common tags.
+- Automatically detect Powah's Uraninite, Energized Steel and four crystals.
+- Automatically detect Silicon and Sky Stone.
+- Automatically detect Silent Gear's Crimson Iron, Crimson Steel, Azure Silver, Azure Electrum and Blaze Gold.
 
 ### Fixed
 

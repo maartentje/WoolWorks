@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.cobalt","color":3232676,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/cobalt","automatic":true}
+{"translation_key":"resource.woolworks.cobalt","color":3232676,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/cobalt","automatic":true,"category":"metals"}

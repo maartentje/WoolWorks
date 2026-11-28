@@ -7,6 +7,7 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 - Run Wool Works without other mods; check existing vanilla resources, feed recipes, sheep transformation, shearing, generator and extractor operation, and item automation.
 - Confirm unavailable optional materials do not appear in the creative tab, JEI, or machine ghost slots.
 - Craft Iron Feed with wheat and an iron ingot. Use it on an adult vanilla sheep; babies and existing Resource Sheep should not transform. Check its tinted fleece and normal nameplate behavior, including a name tag.
+- Craft Netherite Scrap Feed with wheat and netherite scrap, and check its wool extracts scrap. Confirm the former `woolworks:netherite` ID is treated as invalid.
 - Shear the sheep, check Infused Wool, shears durability and regrowth after grazing, then save and reopen the world. Check item tint and appearance in inventories, hands, item frames and as a drop; test invisibility and glowing on the sheep.
 - Test vanilla and modded resource variants, custom datapack variants, and invalid IDs. Confirm different resources do not stack together and resource-independent advancements work.
 - Check the Mods menu's client settings and resource editor in an unpublished singleplayer world. Test Done, Cancel and resource restrictions.
@@ -18,6 +19,7 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 - Install up to eight Speed or two Overdrive Upgrades; check speed, output and FE usage, mixing rejection, manual-only upgrade slots and progress reset after changing upgrades. JEI should show base recipe values.
 - Check empty input ghost suggestions and tooltips without allowing them to change inventory contents.
 - Exercise cable networks with branches, loops, chunk boundaries, placement and removal. Test configured transfer limits, extract-only and bidirectional endpoints, shears toggling, persisted connection state and cable pickup in survival, creative and full inventories.
+- With a generator feeding a cable network across a chunk boundary, load and unload nearby chunks and change the network topology while transferring energy. Confirm there is no crash and transfer resumes after the network settles.
 - Inspect cable arms and extraction indicators on all six sides, including a cable above a generator and multi-sided junctions. Repeat with the `SQUARE` and `LINE` client indicator styles, connecting cables to each other, Wool Works machines and an external FE block.
 - Test both cable recipes with shears, including shift-crafting, durability, unbreakable shears and retained components. Check speed upgrades reject ordinary wool and unavailable resource variants.
 - Place Workers in all directions; check area cycling and the shears-toggle outline. Test shearing and wheat regrowth independently, output-full and energy pauses, babies, resource and vanilla sheep, all-sided automation, configured durability and save/reload.
@@ -26,7 +28,10 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 ## Modded resources
 
 - Install compatible material-providing mods and check their supported materials and tags; no particular external mod is required.
+- Toggle each resource category and verify individually disabled resources stay disabled after re-enabling it. Check automatic-resource settings independently, and check sheep conversion after a category is disabled and the world restarted.
+- Exercise search together with All Resources, Enabled Only and Disabled Only; check reasons, alphabetical order, toggles, Done and Cancel, and that missing optional materials remain hidden. Check the three corrected colors on feed, wool and sheep.
 - Install multiple mods supplying the same material tag; check there is one resource type and extraction consistently chooses the same output.
+- With Modern Industrialization or EvilCraft installed without Occultism, check Coke or Dark Gem respectively is available through its exact-item fallback; also check common-tag contributions when present. Check Utherium produces Utheric Clusters and Monazite and Dragonyst produce dust.
 - Automated standalone checks: `gradlew runGameTestServer`; repeat with `gradlew -PosmiumGameTest runGameTestServer` to load test-only tags containing copper and iron ingots for the optional catalogue.
 - Run `gradlew -PemptyTagGameTest runGameTestServer` separately to check an explicitly empty salt tag. Do not combine test properties: both fixtures define the salt tag.
 - GameTest code and the test structure are in `src/gameTest`; optional fixtures are in `src/osmiumTest` and `src/emptyTagTest`. ModDevGradle attaches these to development runs, not the production JAR. Fixture properties affect GameTest resources only and do not add them to the production JAR.

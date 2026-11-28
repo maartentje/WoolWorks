@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.cupronickel","color":13803914,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/cupronickel","automatic":true}
+{"translation_key":"resource.woolworks.cupronickel","color":13803914,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/cupronickel","automatic":true,"category":"alloys"}

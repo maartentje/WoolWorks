@@ -1,1 +1,1 @@
-{"translation_key":"resource.woolworks.enderium","color":2587513,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/enderium","automatic":true}
+{"translation_key":"resource.woolworks.enderium","color":2587513,"min_yield":1,"max_yield":3,"required_item_tag":"c:ingots/enderium","automatic":true,"category":"alloys"}
