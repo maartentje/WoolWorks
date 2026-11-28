@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
@@ -26,7 +27,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 @EventBusSubscriber(modid = WoolWorks.MODID, value = Dist.CLIENT)
 public final class WorkerVisualization {
     private static final RenderPipeline PIPELINE = RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
-            .withLocation("woolworks:pipeline/worker_area")
+            .withLocation(Identifier.fromNamespaceAndPath(WoolWorks.MODID, "pipeline/worker_area"))
             .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .build();
     private static final RenderType OUTLINE = RenderType.create("woolworks_worker_area",
