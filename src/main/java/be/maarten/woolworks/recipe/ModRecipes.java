@@ -27,7 +27,9 @@ public final class ModRecipes {
         var recipes = event.getPlayerList().getServer().getRecipeManager().recipeMap();
         var snapshot = new MachineRecipesPayload(new java.util.ArrayList<>(recipes.byType(GENERATOR_FUEL.get())),
                 new java.util.ArrayList<>(recipes.byType(WOOL_EXTRACTION.get())));
-        event.getRelevantPlayers().forEach(player -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, snapshot));
+        event.getRelevantPlayers()
+                .filter(player -> net.neoforged.neoforge.network.registration.NetworkRegistry.hasChannel(player.connection, MachineRecipesPayload.TYPE.id()))
+                .forEach(player -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, snapshot));
     }
     public static void registerPayload(net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) {
         event.registrar("1").playToClient(MachineRecipesPayload.TYPE, MachineRecipesPayload.STREAM);
