@@ -51,17 +51,16 @@ public class MachineScreen extends AbstractContainerScreen<MachineMenu> {
 
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-        extractTooltip(graphics, mouseX, mouseY);
         if (mouseX >= leftPos + 9 && mouseX < leftPos + 22 && mouseY >= topPos + 17 && mouseY < topPos + 66) {
-            graphics.setTooltipForNextFrame(font, List.of(Component.literal(menu.energy() + " / 20000 FE"),
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.literal(menu.energy() + " / 20000 FE"),
                     menu.isExtractor() ? Component.translatable("gui.woolworks.consumption", menu.rate()) : Component.literal("Generation: " + menu.rate() + " FE/t")), mouseX, mouseY);
         } else if (menu.isExtractor() && hoveredSlot == menu.slots.get(2) && !hoveredSlot.hasItem()) {
-            graphics.setTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.upgrades"), Component.translatable("gui.woolworks.speed", menu.upgradeStats().speed()), Component.translatable("gui.woolworks.output", menu.upgradeStats().outputMultiplier())), mouseX, mouseY);
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.upgrades"), Component.translatable("gui.woolworks.speed", menu.upgradeStats().speed()), Component.translatable("gui.woolworks.output", menu.upgradeStats().outputMultiplier())), mouseX, mouseY);
         } else if (menu.isExtractor() && menu.oversizedOutput()
                 && hoveredSlot == menu.slots.get(1) && !hoveredSlot.hasItem()) {
-            graphics.setTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.output_too_large")), mouseX, mouseY);
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.output_too_large")), mouseX, mouseY);
         } else if (hoveredSlot == menu.slots.get(0) && !hoveredSlot.hasItem()) {
-            graphics.setTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.infused_wool")), mouseX, mouseY);
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.infused_wool")), mouseX, mouseY);
         } else if ((!menu.isExtractor() && mouseX >= leftPos + 96 && mouseX < leftPos + 102 && mouseY >= topPos + 17 && mouseY < topPos + 45)
                 || (menu.isExtractor() && mouseX >= leftPos + 82 && mouseX < leftPos + 106 && mouseY >= topPos + 37 && mouseY < topPos + 45)) {
             List<Component> lines = new ArrayList<>();
@@ -74,7 +73,7 @@ public class MachineScreen extends AbstractContainerScreen<MachineMenu> {
                 if (!menu.processing()) lines.add(Component.translatable("gui.woolworks.paused"));
             }
             if (menu.isExtractor() && menu.oversizedOutput()) lines.add(Component.translatable("gui.woolworks.output_too_large"));
-            graphics.setTooltipForNextFrame(font, lines, mouseX, mouseY);
+            graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
         }
     }
 }
