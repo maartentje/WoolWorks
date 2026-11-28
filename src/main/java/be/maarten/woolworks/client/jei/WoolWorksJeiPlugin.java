@@ -5,7 +5,9 @@ import be.maarten.woolworks.registry.ModComponents;
 import be.maarten.woolworks.registry.ModItems;
 import be.maarten.woolworks.machine.ModMachines;
 import be.maarten.woolworks.recipe.MachineRecipeConditions;
-import be.maarten.woolworks.recipe.ModRecipes;
+import be.maarten.woolworks.client.ClientMachineRecipes;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
 import be.maarten.woolworks.recipe.GeneratorFuelRecipe;
 import be.maarten.woolworks.resource.GeneratorSettings;
 import java.util.ArrayList;
@@ -38,10 +40,6 @@ public final class WoolWorksJeiPlugin implements IModPlugin {
                 return stack.get(ModComponents.RESOURCE_TYPE);
             }
 
-            @Override public String getLegacyStringSubtypeInfo(ItemStack stack, UidContext context) {
-                var id = stack.get(ModComponents.RESOURCE_TYPE);
-                return id == null ? "" : id.toString();
-            }
         };
         registration.registerSubtypeInterpreter(ModItems.RESOURCE_FEED.get(), interpreter);
         registration.registerSubtypeInterpreter(ModItems.INFUSED_WOOL.get(), interpreter);
@@ -54,7 +52,8 @@ public final class WoolWorksJeiPlugin implements IModPlugin {
     @Override public void registerRecipes(IRecipeRegistration registration) {
         var level = Minecraft.getInstance().level;
         if (level == null) return;
-        var recipes = level.getRecipeManager();
+        var snapshot = ClientMachineRecipes.snapshot().orElse(null);
+        if (snapshot == null) return;
         var fuels = new ArrayList<RecipeHolder<GeneratorFuelRecipe>>();
         int index = 0;
         for (var id : level.registryAccess().lookupOrThrow(be.maarten.woolworks.resource.ResourceTypes.REGISTRY).keySet()) {
@@ -64,12 +63,13 @@ public final class WoolWorksJeiPlugin implements IModPlugin {
             if (selected.isEmpty()) continue;
             var fuel = selected.get();
             var recipe = new GeneratorFuelRecipe(DataComponentIngredient.of(true, stack), fuel.ticks(), fuel.energyPerTick(), Optional.empty(), Optional.empty());
-            fuels.add(new RecipeHolder<>(Identifier.fromNamespaceAndPath(WoolWorks.MODID, "jei/infused_wool/" + index++), recipe));
+            fuels.add(new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(WoolWorks.MODID, "jei/infused_wool/" + index++)), recipe));
         }
         registration.addRecipes(MachineCategories.FUEL, fuels);
-        registration.addRecipes(MachineCategories.EXTRACTION, recipes.getAllRecipesFor(ModRecipes.WOOL_EXTRACTION.get()).stream()
+        registration.addRecipes(MachineCategories.EXTRACTION, snapshot.extraction().stream()
                 .filter(holder -> MachineRecipeConditions.matches(level, holder.value().requiredResource(), Optional.empty()))
-                .filter(holder -> !holder.value().ingredient().hasNoItems()).toList());
+                .filter(holder -> !holder.value().ingredient().hasNoItems())
+                .filter(holder -> !holder.value().getResultItem(level.registryAccess()).isEmpty()).toList());
     }
 
     @Override public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
