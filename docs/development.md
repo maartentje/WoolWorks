@@ -2,7 +2,7 @@
 
 ## Environment
 
-Wool Works targets **Minecraft Java 1.21.1**, **NeoForge 21.1.x**, **Java 21**, ModDevGradle and Mojang mappings. Use a Java 21 JDK and import the repository as a Gradle project. The Gradle wrapper supplies the configured Gradle version. See [NeoForge's 1.21.1 documentation](https://docs.neoforged.net/docs/1.21.1/) and the [Mojang mappings license](https://github.com/NeoForged/NeoForm/blob/main/Mojang.md).
+This development branch is migrating to **Minecraft Java 26.1.2**, **NeoForge 26.1.2.130**, **Java 25**, and ModDevGradle 2.0.148. The port is incomplete and does not yet compile or have verified runtime compatibility. Use a Java 25 JDK and import the repository as a Gradle project; the wrapper supplies Gradle 9.2.1. The target game is unobfuscated and the old 1.21.1 Parchment configuration is not used. See [NeoForge documentation](https://docs.neoforged.net/).
 
 From the repository root, on Windows:
 
@@ -15,7 +15,7 @@ From the repository root, on Windows:
 .\gradlew.bat -PemptyTagGameTest runGameTestServer
 ```
 
-On macOS or Linux, use `./gradlew` instead of `gradlew.bat`. The server run uses `--nogui`. Run the fixture configurations separately: both define a salt tag. They add test-only data to the GameTest source set, not the release JAR. The production artifact is written to `build/libs/woolworks-<minecraft_version>-<mod_version>.jar`, currently `woolworks-1.21.1-1.0.0.jar`.
+On macOS or Linux, use `./gradlew` instead of `gradlew.bat`. The server run uses `--nogui`. Run the fixture configurations separately: both define a salt tag. They add test-only data to the GameTest source set, not the release JAR. The production artifact is written to `build/libs/woolworks-<minecraft_version>-<mod_version>.jar`, currently intended as `woolworks-26.1.2-1.0.0.jar` once the port builds.
 
 ModDevGradle supplies run configurations for the IDE. After changing dependencies or run configurations, reload the Gradle project and regenerate or use the Gradle run tasks if an IDE launch has a stale classpath. Development runs use the local `run/` directory; keep its worlds and configuration out of version control.
 
