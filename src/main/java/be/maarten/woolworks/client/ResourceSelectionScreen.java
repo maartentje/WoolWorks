@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
@@ -21,7 +21,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 
 /** An isolated edit buffer; unknown and temporarily unavailable IDs are retained. */
@@ -48,10 +48,10 @@ final class ResourceSelectionScreen extends Screen {
     }
 
     @Override protected void init() {
-        available = canEdit() && minecraft.level.registryAccess().registry(ResourceTypes.REGISTRY).isPresent();
+        available = canEdit() && minecraft.level.registryAccess().lookup(ResourceTypes.REGISTRY).isPresent();
         resources.clear();
         if (available) {
-            minecraft.level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).entrySet().forEach(entry -> {
+            minecraft.level.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY).entrySet().forEach(entry -> {
                 ResourceType type = entry.getValue();
                 boolean hasTag = type.requiredItemTag().map(id -> BuiltInRegistries.ITEM
                         .getTag(TagKey.create(Registries.ITEM, id)).map(tag -> tag.iterator().hasNext()).orElse(false)).orElse(true);
@@ -85,14 +85,14 @@ final class ResourceSelectionScreen extends Screen {
     private Component filterLabel() { return Component.translatable("woolworks.resources.filter." + (filterMode == 0 ? "all" : filterMode == 1 ? "enabled" : "disabled")); }
     private boolean effective(ResourceEntry entry) { return ResourceTypes.enabled(entry.id(), entry.type(), disabled.contains(entry.id().toString())); }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
         graphics.drawCenteredString(font, title, width / 2, 12, 0xffffff);
         if (available) graphics.drawCenteredString(font, Component.translatable("woolworks.resources.restart"), width / 2, height - 48, 0xffcc55);
         else graphics.drawWordWrap(font, Component.translatable("woolworks.resources.unavailable"), width / 2 - 150, 50, 300, 0xffffff);
     }
 
-    private record ResourceEntry(ResourceLocation id, ResourceType type, boolean hasTag) {
+    private record ResourceEntry(Identifier id, ResourceType type, boolean hasTag) {
         Component name() { return Component.translatable(type.translationKey()); }
     }
 
@@ -139,7 +139,7 @@ final class ResourceSelectionScreen extends Screen {
                 return Component.translatable(disabled.contains(resource.id().toString()) ? "woolworks.resources.off" : "woolworks.resources.on");
             }
             @Override public Component getNarration() { return Component.literal(resource.name().getString() + ": ").append(label()); }
-            @Override public void render(GuiGraphics graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovering, float partialTick) {
+            @Override public void render(GuiGraphicsExtractor graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovering, float partialTick) {
                 var stack = ModItems.withResource(ModItems.INFUSED_WOOL.get(), resource.id());
                 graphics.renderItem(stack, left + 2, top + 2);
                 graphics.drawString(font, font.plainSubstrByWidth(resource.name().getString(), width - 117), left + 23, top + 6, 0xffffff, false);
