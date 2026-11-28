@@ -8,7 +8,7 @@ import be.maarten.woolworks.resource.ResourceTypes;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Registry;
 import net.minecraft.world.inventory.Slot;
@@ -35,7 +35,7 @@ public final class GhostItems {
     public static List<ItemStack> wool(boolean extractor) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) { clear(); return List.of(); }
-        var registry = level.registryAccess().registry(ResourceTypes.REGISTRY).orElse(null);
+        var registry = level.registryAccess().lookup(ResourceTypes.REGISTRY).orElse(null);
         var recipes = level.getRecipeManager();
         if (cachedLevel != level || cachedRegistry != registry || cachedRecipes != recipes) {
             cachedLevel = level; cachedRegistry = registry; cachedRecipes = recipes;
@@ -50,7 +50,7 @@ public final class GhostItems {
         }
         return extractor ? extractorWool : generatorWool;
     }
-    public static void draw(GuiGraphics graphics, Slot slot, int left, int top, List<ItemStack> options) {
+    public static void draw(GuiGraphicsExtractor graphics, Slot slot, int left, int top, List<ItemStack> options) {
         if (slot.hasItem() || options.isEmpty()) return;
         int index = (int)Math.floorMod(System.currentTimeMillis() / 2000L, options.size());
         int x = left + slot.x, y = top + slot.y;
