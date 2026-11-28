@@ -183,6 +183,7 @@
   "gui.woolworks.worker.cycle": "Click to cycle working area.",
   "gui.woolworks.worker.visualization": "Right-click the machine with Shears to show or hide the working area.",
   "block.woolworks.wool_insulated_cable": "Wool-Insulated Cable",
+  "item.woolworks.wool_insulated_cable": "Wool-Insulated Cable",
   "item.woolworks.wool_insulated_cable.pickup": "Sneak-right-click with shears to pick up",
   "item.woolworks.wool_insulated_cable.rate": "Max Transfer Rate: %s FE/t",
   "gui.woolworks.upgrades": "Upgrades",

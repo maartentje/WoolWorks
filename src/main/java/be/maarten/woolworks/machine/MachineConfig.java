@@ -20,7 +20,7 @@ public final class MachineConfig {
         ENABLE_MOB_DROPS = builder.comment("Enable resources in the Mob Drops category.").define("enableMobDrops", true);
         ENABLE_ESSENCES = builder.comment("Enable resources in the Essences category.").define("enableEssences", true);
         DISABLED_RESOURCES = builder.comment("Resource IDs to disable, for example woolworks:osmium.")
-                .defineListAllowEmpty("disabledResources", java.util.List.of(), value -> value instanceof String s && net.minecraft.resources.ResourceLocation.tryParse(s) != null);
+                .defineListAllowEmpty("disabledResources", java.util.List.of(), value -> value instanceof String s && net.minecraft.resources.Identifier.tryParse(s) != null);
         CABLE_TRANSFER_RATE = builder.comment("Maximum FE transferred through each cable per server tick.")
                 .defineInRange("cableTransferRate", 160, 1, Integer.MAX_VALUE);
         WORKER_INTERVAL = builder.defineInRange("woolWorkerOperationInterval", 200, 1, Integer.MAX_VALUE);

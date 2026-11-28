@@ -4,6 +4,20 @@ All notable changes to Wool Works will be documented in this file.
 
 ## [Unreleased]
 
+### Compatibility
+
+- Port Wool Works to Minecraft 26.1.2, NeoForge 26.1.2.130 and Java 25, including transactional item and energy capabilities, updated rendering, and optional JEI and Jade integrations.
+- Newly placed cables automatically extract from Wool Generators; external energy handlers default to passive connections and can be configured with shears.
+
+### Fixed
+
+- Allow machines to be harvested with a pickaxe in survival.
+- Restore Certus Quartz and Fluix feed and extraction recipes when their required tags are available.
+
+### Modpack customization
+
+- Update recipe ingredients to item/tag strings and the `neoforge:ingredient_type` discriminator. Existing 1.21.1 overrides must be adapted; resource and recipe IDs remain unchanged.
+
 ## [1.0.0]
 
 First stable release for Minecraft 1.21.1 (NeoForge).

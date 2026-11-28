@@ -1,1 +1,1 @@
-{"type":"minecraft:crafting_shaped","pattern":["III","IPI","WWW"],"key":{"I":{"item":"minecraft:iron_ingot"},"P":{"item":"minecraft:piston"},"W":{"tag":"minecraft:wool"}},"result":{"id":"woolworks:wool_extractor","count":1}}
+{"type":"minecraft:crafting_shaped","pattern":["III","IPI","WWW"],"key":{"I":"minecraft:iron_ingot","P":"minecraft:piston","W":"#minecraft:wool"},"result":{"id":"woolworks:wool_extractor","count":1}}

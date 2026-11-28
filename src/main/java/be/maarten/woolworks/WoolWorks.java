@@ -35,8 +35,8 @@ public class WoolWorks {
                     output.accept(ModItems.OVERDRIVE_UPGRADE.get());
                     output.accept(ModItems.MUFFLER.get());
                     parameters.holders().lookup(ResourceTypes.REGISTRY).ifPresent(registry ->
-                        registry.listElements().filter(holder -> ResourceTypes.enabled(holder.key().location(), holder.value())).forEach(holder -> {
-                            var id = holder.key().location();
+                        registry.listElements().filter(holder -> ResourceTypes.enabled(holder.key().identifier(), holder.value())).forEach(holder -> {
+                            var id = holder.key().identifier();
                             output.accept(ModItems.withResource(ModItems.RESOURCE_FEED.get(), id));
                             output.accept(ModItems.withResource(ModItems.INFUSED_WOOL.get(), id));
                         }));
@@ -46,8 +46,10 @@ public class WoolWorks {
 
     public WoolWorks(IEventBus bus, ModContainer container) {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(be.maarten.woolworks.recipe.WoolExtractionRecipe::tagsUpdated);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(ModRecipes::syncRecipes);
         container.registerConfig(ModConfig.Type.SERVER, MachineConfig.SPEC);
         bus.addListener(ResourceTypes::register);
+        bus.addListener(ModRecipes::registerPayload);
         bus.addListener(ModEntities::attributes);
         bus.addListener(ModMachines::capabilities);
         ModMachines.BLOCKS.register(bus);
@@ -59,6 +61,7 @@ public class WoolWorks {
         ModRecipes.TYPES.register(bus);
         ModRecipes.SERIALIZERS.register(bus);
         ModRecipes.INGREDIENTS.register(bus);
+        ModRecipes.SLOT_DISPLAYS.register(bus);
         be.maarten.woolworks.advancement.ModCriteria.TYPES.register(bus);
         TABS.register(bus);
     }

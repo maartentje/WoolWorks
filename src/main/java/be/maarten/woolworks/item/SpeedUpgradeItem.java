@@ -1,6 +1,7 @@
 package be.maarten.woolworks.item;
 
-import java.util.List;
+import java.util.function.Consumer;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -13,8 +14,8 @@ public class SpeedUpgradeItem extends ExtractorUpgradeItem {
     @Override public int maxExtractorUpgrades() { return MAX_UPGRADES; }
     @Override public Stats stats(int count) { return new Stats(2 + count, 1, 1); }
 
-    @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable("item.woolworks.woolly_speed_upgrade.tooltip").withStyle(ChatFormatting.GRAY));
-        lines.add(Component.translatable("item.woolworks.upgrade.max", maxExtractorUpgrades()).withStyle(ChatFormatting.GRAY));
+    @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> lines, TooltipFlag flag) {
+        lines.accept(Component.translatable("item.woolworks.woolly_speed_upgrade.tooltip").withStyle(ChatFormatting.GRAY));
+        lines.accept(Component.translatable("item.woolworks.upgrade.max", maxExtractorUpgrades()).withStyle(ChatFormatting.GRAY));
     }
 }

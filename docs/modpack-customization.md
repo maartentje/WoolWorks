@@ -178,6 +178,8 @@ The published 1.21.1 AE2 tag files use `c:gems/certus_quartz` and `c:gems/fluix`
 
 ## Custom Feed and extraction recipes
 
+**Minecraft 26.1.2:** use datapack format 101.1 (`min_format` and `max_format` set to `[101, 1]`). A resource-definition override was tested during the port; the complete examples below have not been independently runtime-tested. Existing 1.21.1 overrides must change ingredient objects such as `{"item":"minecraft:wheat"}` to `"minecraft:wheat"`, and `{"tag":"c:ingots/tin"}` to `"#c:ingots/tin"`. Custom ingredient objects use `"neoforge:ingredient_type"` instead of `"type"`; top-level recipe `"type"` is unchanged. Review external datapacks and KubeJS scripts before upgrading; recipe IDs and resource components remain unchanged.
+
 Recipes are standard datapack resources under `data/<namespace>/recipe/`, and can be replaced by another datapack at the same ID. For example, the existing Feed and extraction IDs for iron are `woolworks:iron_feed` and `woolworks:extraction/iron`. Replacing one does not require replacing the other.
 
 For the `example:ruby` definition above, `data/example/recipe/ruby_feed.json` can use the existing conditional shapeless serializer. This example uses a diamond as its ingredient, so it needs no other mod:
@@ -187,7 +189,7 @@ For the `example:ruby` definition above, `data/example/recipe/ruby_feed.json` ca
   "type": "woolworks:resource_conditional_crafting",
   "required_resource": "example:ruby",
   "recipe": {
-    "ingredients": [{"item": "minecraft:wheat"}, {"item": "minecraft:diamond"}],
+    "ingredients": ["minecraft:wheat", "minecraft:diamond"],
     "result": {
       "id": "woolworks:resource_feed",
       "count": 1,
@@ -203,7 +205,7 @@ Add `data/example/recipe/extraction/ruby.json` to extract one diamond from that 
 {
   "type": "woolworks:wool_extraction",
   "ingredient": {
-    "type": "neoforge:components",
+    "neoforge:ingredient_type": "neoforge:components",
     "items": "woolworks:infused_wool",
     "components": {"woolworks:resource_type": "example:ruby"}
   },
@@ -226,7 +228,7 @@ ServerEvents.recipes(event => {
 })
 ```
 
-The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also shows raw-JSON replacements for Tin Feed and extraction. Enable one case at a time; see its [instructions](../examples/README.md). Basic KubeJS recipe customization and datapack customization have been manually compatibility-tested, as have Almost Unified and selected FE/item automation setups. Exact scripts, mod versions, load orders and every possible override combination have not all been verified; test your own pack and inspect logs after changes.
+The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also shows raw-JSON replacements for Tin Feed and extraction. Enable one case at a time; see its [instructions](../examples/README.md). Earlier manual KubeJS compatibility testing applied to Minecraft 1.21.1. The examples target 26.1.2; KubeJS integration has not been verified on this version. Test your own pack and inspect logs.
 
 ## Other machine configuration and recipes
 
@@ -235,6 +237,8 @@ The [example script](../examples/kubejs/server_scripts/woolworks_test.js) also s
 *A wool-processing setup using an Extractor and Generator.*
 
 The world server config `serverconfig/woolworks-server.toml` also provides `cableTransferRate` (default 160 FE/t per cable segment), `woolWorkerOperationInterval` (200 ticks), `woolWorkerRegrowthEnergyCost` (400 FE), `woolWorkerShearingEnergyCost` (200 FE), `woolWorkerWheatCost` (1) and `woolWorkerShearsDurabilityCost` (0). Existing config files retain their saved values. Worker energy costs are capped at its 20,000 FE capacity. Check the server log for the effective config path when a development or host setup provides an override. Server configuration is synchronized to connected clients.
+
+In 26.1.2, newly placed cables automatically enable extraction from adjacent Wool Generators. Unknown external energy handlers default to passive connections; use shears on the relevant cable face to enable or disable extraction manually. Existing extraction masks are retained, including when a producer is empty. Extraction can also be toggled on receive-only machines; doing so does not make them supply energy.
 
 Generator fuel recipes use `woolworks:generator_fuel` with `ingredient`, `burn_ticks` and `energy_per_tick`; `required_resource` and `absent_resource` are optional availability checks. Fuel must be valid Infused Wool. The default `woolworks:generator/infused_wool` recipe supplies 400 ticks at 40 FE/t; matching custom fuel recipes take precedence over that default. Extraction recipes support `required_resource`; their duration and FE/t are datapack fields. Speed upgrades keep configured FE/t, whereas Overdrive multiplies FE/t and output; extraction pauses if the output cannot fit.
 

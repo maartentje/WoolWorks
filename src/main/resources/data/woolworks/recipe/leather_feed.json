@@ -1,1 +1,1 @@
-{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:leather","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:leather"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:leather"}}}}
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:leather","recipe":{"ingredients":["minecraft:wheat","minecraft:leather"],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:leather"}}}}

@@ -1,28 +1,24 @@
 package be.maarten.woolworks.machine;
 
-import be.maarten.woolworks.recipe.ModRecipes;
-import be.maarten.woolworks.resource.GeneratorSettings;
+import be.maarten.woolworks.recipe.MachineRecipeLookup;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 
 public final class GeneratorFuels {
     public record Fuel(int ticks, int energyPerTick) {}
+    private static BiFunction<Level, ItemStack, Optional<Fuel>> clientLookup;
     private GeneratorFuels() {}
+
+    public static void setClientLookup(BiFunction<Level, ItemStack, Optional<Fuel>> lookup) { clientLookup = lookup; }
 
     public static Optional<Fuel> find(Level level, ItemStack stack) {
         if (stack.isEmpty()) return Optional.empty();
-        var input = new SingleRecipeInput(stack);
-        var defaults = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("woolworks", "generator/infused_wool");
-        var recipe = level.getRecipeManager().getAllRecipesFor(ModRecipes.GENERATOR_FUEL.get()).stream()
-                .filter(holder -> !holder.id().equals(defaults) && holder.value().matches(input, level)).findFirst();
-        if (recipe.isEmpty()) recipe = level.getRecipeManager().byKey(defaults)
-                .filter(holder -> holder.value() instanceof be.maarten.woolworks.recipe.GeneratorFuelRecipe)
-                .map(holder -> new net.minecraft.world.item.crafting.RecipeHolder<>(holder.id(), (be.maarten.woolworks.recipe.GeneratorFuelRecipe) holder.value()))
-                .filter(holder -> holder.value().matches(input, level));
-        if (recipe.isPresent()) return Optional.of(new Fuel(recipe.get().value().burnTicks(), recipe.get().value().energyPerTick()));
+        if (level instanceof ServerLevel server) return MachineRecipeLookup.serverFuel(server, stack)
+                .map(holder -> new Fuel(holder.value().burnTicks(), holder.value().energyPerTick()));
+        if (level.isClientSide() && clientLookup != null) return clientLookup.apply(level, stack);
         return Optional.empty();
     }
 }

@@ -6,7 +6,7 @@ import be.maarten.woolworks.item.ResourceItem;
 import be.maarten.woolworks.item.SpeedUpgradeItem;
 import be.maarten.woolworks.item.OverdriveUpgradeItem;
 import be.maarten.woolworks.item.WoollyMufflerItem;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -22,7 +22,7 @@ public final class ModItems {
 
     private ModItems() {}
 
-    public static ItemStack withResource(Item item, ResourceLocation resource) {
+    public static ItemStack withResource(Item item, Identifier resource) {
         ItemStack stack = new ItemStack(item);
         stack.set(ModComponents.RESOURCE_TYPE, resource);
         return stack;

@@ -10,7 +10,10 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
 @Mod(value = WoolWorks.MODID, dist = Dist.CLIENT)
 public class WoolWorksClient {
-    public WoolWorksClient(ModContainer container) {
+    public WoolWorksClient(ModContainer container, net.neoforged.bus.api.IEventBus bus) {
+        bus.addListener(ClientMachineRecipes::registerPayload);
+        be.maarten.woolworks.machine.GeneratorFuels.setClientLookup((level, stack) -> ClientMachineRecipes.fuel(level, stack)
+                .flatMap(value -> value).map(holder -> new be.maarten.woolworks.machine.GeneratorFuels.Fuel(holder.value().burnTicks(), holder.value().energyPerTick())));
         container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         container.registerExtensionPoint(IConfigScreenFactory.class, (mod, parent) -> {
             var screen = new ConfigurationScreen(mod, parent,

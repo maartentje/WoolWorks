@@ -8,9 +8,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -19,9 +19,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.IShearable;
 import net.neoforged.neoforge.common.ItemAbilities;
-import net.neoforged.neoforge.energy.EnergyStorage;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -36,37 +36,24 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
     private record PendingShearing(ItemStack wool, List<ItemStack> drops) {}
     private final Map<UUID, PendingShearing> pendingDrops = new HashMap<>();
     public static final int RUNNING = 0, MISSING_INPUTS = 1, INSUFFICIENT_ENERGY = 2, OUTPUT_FULL = 3;
-    private final EnergyStorage energy = new EnergyStorage(CAPACITY, Integer.MAX_VALUE, 0) {
-        @Override public int receiveEnergy(int amount, boolean simulate) {
-            int result = super.receiveEnergy(amount, simulate);
-            if (!simulate && result > 0) setChanged();
-            return result;
-        }
+    private final MachineEnergy energy = new MachineEnergy(CAPACITY, Integer.MAX_VALUE, 0,
+            () -> level != null && !level.isClientSide(), () -> level == null ? Long.MIN_VALUE : level.getGameTime(), this::setChanged);
+    private final MachineInventory inventory = new MachineInventory(20) {
+        @Override protected boolean accepts(int slot, ItemStack stack) { return slot == 0 ? isShears(stack) : slot == 1 && stack.is(Items.WHEAT); }
+        @Override protected int limit(int slot, ItemStack stack) { return slot == 0 ? 1 : super.limit(slot, stack); }
+        @Override protected void onContentsChanged(int slot, ItemStack previous) { setChanged(); }
     };
-    private final ItemStackHandler inventory = new ItemStackHandler(20) {
-        @Override public boolean isItemValid(int slot, ItemStack stack) {
-            return slot == 0 ? isShears(stack) : slot == 1 && stack.is(Items.WHEAT);
-        }
-        @Override public int getSlotLimit(int slot) { return slot == 0 ? 1 : 64; }
-        @Override protected void onContentsChanged(int slot) { setChanged(); }
-    };
-    private final IItemHandler automation = new IItemHandler() {
-        @Override public int getSlots() { return 20; }
-        @Override public ItemStack getStackInSlot(int slot) { return inventory.getStackInSlot(slot); }
-        @Override public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) { return slot < 2 ? inventory.insertItem(slot, stack, simulate) : stack; }
-        @Override public ItemStack extractItem(int slot, int amount, boolean simulate) { return slot >= 2 ? inventory.extractItem(slot, amount, simulate) : ItemStack.EMPTY; }
-        @Override public int getSlotLimit(int slot) { return inventory.getSlotLimit(slot); }
-        @Override public boolean isItemValid(int slot, ItemStack stack) { return slot < 2 && inventory.isItemValid(slot, stack); }
-    };
+    private final net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation = inventory.automation(20, slot -> slot < 2, slot -> slot >= 2);
+
     public WorkerBlockEntity(BlockPos pos, BlockState state) { super(ModMachines.WORKER_ENTITY.get(), pos, state, true); }
-    @Override public void onLoad() { super.onLoad(); if (level != null && !level.isClientSide && muffleMode().sheepMuted()) SheepSoundZones.add(this); }
+    @Override public void onLoad() { super.onLoad(); if (level != null && !level.isClientSide() && muffleMode().sheepMuted()) SheepSoundZones.add(this); }
     @Override protected void onMuffleModeChanged() { if (muffleMode().sheepMuted()) SheepSoundZones.add(this); else SheepSoundZones.remove(this); }
     @Override public void onChunkUnloaded() { SheepSoundZones.remove(this); super.onChunkUnloaded(); }
     @Override public void setRemoved() { SheepSoundZones.remove(this); super.setRemoved(); }
     public static boolean isShears(ItemStack stack) { return stack.canPerformAction(ItemAbilities.SHEARS_HARVEST); }
-    public ItemStackHandler inventory() { return inventory; }
-    public IItemHandler automation() { return automation; }
-    public EnergyStorage energy() { return energy; }
+    public MachineInventory inventory() { return inventory; }
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> automation() { return automation; }
+    public net.neoforged.neoforge.transfer.energy.EnergyHandler energy() { return energy; }
     public int area() { return area; }
     public int remainingOperationTicks() { return Math.max(0, MachineConfig.WORKER_INTERVAL.get() - Math.max(0, operationProgress)); }
     public static int regrowthCost() { return Math.min(MachineConfig.WORKER_REGROWTH_COST.get(), CAPACITY); }
@@ -135,14 +122,18 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
         return remainder;
     }
     private boolean canStoreAll(List<ItemStack> drops) {
-        ItemStackHandler copy = new ItemStackHandler(18);
-        for (int slot = 0; slot < 18; slot++) copy.setStackInSlot(slot, inventory.getStackInSlot(slot + 2).copy());
-        for (ItemStack drop : drops) {
-            ItemStack left = drop.copy();
-            for (int slot = 0; slot < 18 && !left.isEmpty(); slot++) left = copy.insertItem(slot, left, false);
-            if (!left.isEmpty()) return false;
+        var copy = new ItemStacksResourceHandler(18);
+        for (int slot = 0; slot < 18; slot++) {
+            var stack = inventory.getStackInSlot(slot + 2);
+            copy.set(slot, ItemResource.of(stack), stack.getCount());
         }
-        return true;
+        try (var tx = Transaction.openRoot()) {
+            for (ItemStack drop : drops) {
+                if (drop.isEmpty()) continue;
+                if (copy.insert(ItemResource.of(drop), drop.getCount(), tx) != drop.getCount()) return false;
+            }
+            return true;
+        }
     }
     private ItemStack minimumWool(Sheep sheep) {
         if (sheep instanceof ResourceSheep resource) {
@@ -151,7 +142,7 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
             result.setCount(resource.resourceType().get().minYield());
             return result;
         }
-        ItemStack result = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.withDefaultNamespace(sheep.getColor().getName() + "_wool")));
+        ItemStack result = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.withDefaultNamespace(sheep.getColor().getName() + "_wool")));
         return result;
     }
     private void process(ServerLevel server) {
@@ -173,7 +164,7 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
             if (animal.isSheared()
                     && inventory.getStackInSlot(1).getCount() >= wheat && energy.getEnergyStored() >= regrow) {
                 inventory.extractItem(1, wheat, false);
-                energy.deserializeNBT(server.registryAccess(), IntTag.valueOf(energy.getEnergyStored() - regrow));
+                energy.setStored(energy.getEnergyStored() - regrow);
                 animal.setSheared(false);
                 setChanged();
             }
@@ -206,50 +197,52 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
                     continue;
                 }
             }
-            energy.deserializeNBT(server.registryAccess(), IntTag.valueOf(energy.getEnergyStored() - shear));
+            energy.setStored(energy.getEnergyStored() - shear);
             MachineSounds.shearing(server, animal, muffleMode());
             for (var drop : drops) insertOutput(drop, false);
             int durability = MachineConfig.WORKER_DURABILITY_COST.get();
-            if (durability > 0) tool.hurtAndBreak(durability, server, null, item -> {});
+            if (durability > 0) { tool.hurtAndBreak(durability, server, null, item -> {}); inventory.setStackInSlot(0, tool); }
             setChanged();
         }
     }
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries); tag.put("Inventory", inventory.serializeNBT(registries));
-        tag.putInt("Energy", energy.getEnergyStored()); tag.putInt("Area", area); tag.putInt("Rotation", rotation);
-        if (operationProgress >= 0) tag.putInt("OperationProgress", operationProgress);
-        ListTag plans = new ListTag();
-        pendingDrops.forEach((id, pending) -> {
-            CompoundTag plan = new CompoundTag();
-            plan.putUUID("Sheep", id);
-            ListTag drops = new ListTag();
-            plan.put("Wool", pending.wool().save(registries));
-            for (ItemStack stack : pending.drops()) if (!stack.isEmpty()) drops.add(stack.save(registries));
-            plan.put("Drops", drops);
-            plans.add(plan);
-        });
-        if (!plans.isEmpty()) tag.put("PendingShearing", plans);
+    @Override protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
+        super.saveAdditional(out); inventory.serialize(out.child("Inventory"));
+        out.putInt("Energy", energy.getEnergyStored()); out.putInt("Area", area); out.putInt("Rotation", rotation);
+        if (operationProgress >= 0) out.putInt("OperationProgress", operationProgress);
+        if (!pendingDrops.isEmpty()) {
+            var plans = out.childrenList("PendingShearing");
+            pendingDrops.forEach((id, pending) -> {
+                var plan = plans.addChild(); plan.store("Sheep", net.minecraft.core.UUIDUtil.CODEC, id);
+                plan.store("Wool", ItemStack.CODEC, pending.wool()); plan.store("Drops", ItemStack.CODEC.listOf(), pending.drops());
+            });
+        }
     }
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries); inventory.deserializeNBT(registries, tag.getCompound("Inventory"));
-        energy.deserializeNBT(registries, IntTag.valueOf(Math.clamp(tag.getInt("Energy"), 0, energy.getMaxEnergyStored())));
-        int saved = tag.getInt("Area"); area = saved == 11 ? 9 : saved >= 1 && saved <= 9 && (saved & 1) == 1 ? saved : 3; rotation = tag.getInt("Rotation");
-        operationProgress = tag.contains("OperationProgress") ? Math.max(0, tag.getInt("OperationProgress")) : -1;
+    @Override protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
+        super.loadAdditional(in);
+        if (in.keySet().contains("Inventory")) inventory.deserialize(in.child("Inventory").orElseThrow(() -> new IllegalStateException("Unreadable worker inventory")));
+        energy.load(in);
+        int saved = in.getIntOr("Area", 0); area = saved == 11 ? 9 : saved >= 1 && saved <= 9 && (saved & 1) == 1 ? saved : 3;
+        rotation = in.getIntOr("Rotation", 0); operationProgress = in.getInt("OperationProgress").map(v -> Math.max(0, v)).orElse(-1);
         pendingDrops.clear();
-        ListTag plans = tag.getList("PendingShearing", 10);
-        for (int i = 0; i < plans.size(); i++) {
-            CompoundTag plan = plans.getCompound(i);
-            if (!plan.hasUUID("Sheep")) continue;
-            List<ItemStack> loaded = new ArrayList<>();
-            ListTag drops = plan.getList("Drops", 10);
-            for (int j = 0; j < drops.size(); j++) {
-                ItemStack stack = ItemStack.parseOptional(registries, drops.getCompound(j));
-                if (!stack.isEmpty()) loaded.add(stack);
-            }
-            ItemStack wool = ItemStack.parseOptional(registries, plan.getCompound("Wool"));
-            if (!loaded.isEmpty() && !wool.isEmpty()) pendingDrops.put(plan.getUUID("Sheep"), new PendingShearing(wool, List.copyOf(loaded)));
+        var plans = in.childrenList("PendingShearing");
+        if (in.keySet().contains("PendingShearing") && plans.isEmpty()) throw new IllegalStateException("Unreadable pending shearing");
+        for (var plan : plans.orElseGet(() -> in.childrenListOrEmpty("PendingShearing"))) {
+            var id = plan.read("Sheep", net.minecraft.core.UUIDUtil.CODEC).orElseThrow(() -> new IllegalStateException("Unreadable pending sheep UUID"));
+            var wool = plan.read("Wool", ItemStack.CODEC).orElseThrow(() -> new IllegalStateException("Unreadable pending wool"));
+            var drops = plan.read("Drops", ItemStack.CODEC.listOf()).orElseThrow(() -> new IllegalStateException("Unreadable pending drops"));
+            if (pendingDrops.put(id, new PendingShearing(wool, List.copyOf(drops))) != null) throw new IllegalStateException("Duplicate pending sheep " + id);
         }
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return saveCustomOnly(registries); }
     @Override public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() { return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this); }
+
+    @Override public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level instanceof net.minecraft.server.level.ServerLevel) {
+            for (int i = 0; i < inventory().getSlots(); i++) {
+                var stack = inventory().getStackInSlot(i);
+                if (!stack.isEmpty()) net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+            }
+        }
+    }
 }

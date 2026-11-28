@@ -2,7 +2,8 @@ package be.maarten.woolworks.item;
 
 import be.maarten.woolworks.registry.ModComponents;
 import be.maarten.woolworks.resource.ResourceTypes;
-import java.util.List;
+import java.util.function.Consumer;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -18,19 +19,19 @@ public class ResourceItem extends Item {
         var id = stack.get(ModComponents.RESOURCE_TYPE);
         if (id == null) return super.getName(stack);
         String translationKey = "resource." + id.getNamespace() + "." + id.getPath();
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             translationKey = be.maarten.woolworks.client.ClientResourceNames.translationKey(id).orElse(translationKey);
         }
         return Component.translatable(getDescriptionId() + ".named", Component.translatable(translationKey));
     }
 
-    @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+    @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> lines, TooltipFlag flag) {
         var id = stack.get(ModComponents.RESOURCE_TYPE);
         if (id == null) return;
-        lines.add(Component.literal(id.toString()).withStyle(ChatFormatting.GRAY));
+        lines.accept(Component.literal(id.toString()).withStyle(ChatFormatting.GRAY));
         if (context.registries() != null) {
             context.registries().lookup(ResourceTypes.REGISTRY).flatMap(reg -> reg.get(net.minecraft.resources.ResourceKey.create(ResourceTypes.REGISTRY, id)))
-                    .ifPresent(holder -> lines.add(Component.translatable(holder.value().translationKey()).withStyle(ChatFormatting.GRAY)));
+                    .ifPresent(holder -> lines.accept(Component.translatable(holder.value().translationKey()).withStyle(ChatFormatting.GRAY)));
         }
     }
 }

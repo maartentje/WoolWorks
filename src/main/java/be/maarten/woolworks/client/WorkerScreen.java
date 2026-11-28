@@ -5,7 +5,7 @@ import be.maarten.woolworks.machine.MachineConfig;
 import be.maarten.woolworks.machine.WorkerBlockEntity;
 import java.util.List;
 import java.util.Locale;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -17,13 +17,13 @@ public class WorkerScreen extends AbstractContainerScreen<WorkerMenu> {
     private static final List<ItemStack> SHEARS = List.of(new ItemStack(Items.SHEARS));
     private static final List<ItemStack> WHEAT = List.of(new ItemStack(Items.WHEAT));
     private Button area;
-    public WorkerScreen(WorkerMenu menu, Inventory inventory, Component title) { super(menu, inventory, title); imageWidth = 176; imageHeight = 182; inventoryLabelY = 89; }
+    public WorkerScreen(WorkerMenu menu, Inventory inventory, Component title) { super(menu, inventory, title, 176, 182); inventoryLabelY = 89; }
     @Override protected void init() {
         super.init();
         area = addRenderableWidget(Button.builder(Component.empty(), button -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0))
                 .bounds(leftPos + 137, topPos + 4, 32, 18).build());
     }
-    @Override protected void renderBg(GuiGraphics graphics, float partial, int mouseX, int mouseY) {
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int x = leftPos, y = topPos;
         graphics.fill(x, y, x + imageWidth, y + imageHeight, 0xff373737);
         graphics.fill(x + 1, y + 1, x + imageWidth - 1, y + imageHeight - 1, 0xffc6c6c6);
@@ -44,11 +44,10 @@ public class WorkerScreen extends AbstractContainerScreen<WorkerMenu> {
         GhostItems.draw(graphics, menu.slots.get(1), x, y, WHEAT);
         area.setMessage(Component.literal(menu.area() + "x" + menu.area()));
     }
-    @Override public void render(GuiGraphics graphics, int x, int y, float partial) {
-        super.render(graphics, x, y, partial);
-        renderTooltip(graphics, x, y);
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partial) {
+        super.extractRenderState(graphics, x, y, partial);
         if (x >= leftPos + 9 && x < leftPos + 21 && y >= topPos + 25 && y < topPos + 79)
-            graphics.renderComponentTooltip(font, List.of(Component.translatable("gui.woolworks.worker.energy", menu.energy(), WorkerBlockEntity.CAPACITY), Component.translatable("gui.woolworks.worker.regrowth", WorkerBlockEntity.regrowthCost()), Component.translatable("gui.woolworks.worker.shearing", WorkerBlockEntity.shearingCost())), x, y);
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.energy", menu.energy(), WorkerBlockEntity.CAPACITY), Component.translatable("gui.woolworks.worker.regrowth", WorkerBlockEntity.regrowthCost()), Component.translatable("gui.woolworks.worker.shearing", WorkerBlockEntity.shearingCost())), x, y);
         else if (x >= leftPos + 34 && x < leftPos + 40 && y >= topPos + 44 && y < topPos + 59) {
             int interval = Math.max(1, menu.interval());
             int elapsed = Math.clamp(menu.elapsed(), 0, interval);
@@ -58,11 +57,11 @@ public class WorkerScreen extends AbstractContainerScreen<WorkerMenu> {
                 case WorkerBlockEntity.OUTPUT_FULL -> Component.translatable("gui.woolworks.worker.paused_output");
                 default -> Component.translatable("gui.woolworks.worker.next_operation", String.format(Locale.ROOT, "%.1f", (interval - elapsed) / 20.0));
             };
-            graphics.renderComponentTooltip(font, List.of(status,
+            graphics.setComponentTooltipForNextFrame(font, List.of(status,
                     Component.translatable("gui.woolworks.worker.interval", String.format(Locale.ROOT, "%.1f", interval / 20.0))), x, y);
         }
-        else if (hoveredSlot == menu.slots.get(0) && !hoveredSlot.hasItem()) graphics.renderComponentTooltip(font, List.of(Component.translatable("gui.woolworks.worker.shears"), Component.translatable("gui.woolworks.worker.shears_desc")), x, y);
-        else if (hoveredSlot == menu.slots.get(1) && !hoveredSlot.hasItem()) graphics.renderComponentTooltip(font, List.of(Component.translatable("gui.woolworks.worker.wheat"), Component.translatable("gui.woolworks.worker.wheat_desc")), x, y);
-        else if (area.isHovered()) graphics.renderComponentTooltip(font, List.of(Component.translatable("gui.woolworks.worker.area", menu.area(), menu.area()), Component.translatable("gui.woolworks.worker.cycle"), Component.translatable("gui.woolworks.worker.visualization")), x, y);
+        else if (hoveredSlot == menu.slots.get(0) && !hoveredSlot.hasItem()) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.shears"), Component.translatable("gui.woolworks.worker.shears_desc")), x, y);
+        else if (hoveredSlot == menu.slots.get(1) && !hoveredSlot.hasItem()) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.wheat"), Component.translatable("gui.woolworks.worker.wheat_desc")), x, y);
+        else if (area.isHovered()) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.area", menu.area(), menu.area()), Component.translatable("gui.woolworks.worker.cycle"), Component.translatable("gui.woolworks.worker.visualization")), x, y);
     }
 }

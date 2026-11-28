@@ -1,1 +1,1 @@
-{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:gunpowder","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:gunpowder"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:gunpowder"}}}}
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:gunpowder","recipe":{"ingredients":["minecraft:wheat","minecraft:gunpowder"],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:gunpowder"}}}}

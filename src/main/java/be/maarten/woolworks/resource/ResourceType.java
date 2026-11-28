@@ -5,14 +5,14 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 /** A resource type loaded from a datapack and synchronized to connected clients. */
-public record ResourceType(String translationKey, int color, int minYield, int maxYield, boolean enabled, java.util.Optional<net.minecraft.resources.ResourceLocation> requiredItemTag, boolean automatic, ResourceCategory category) {
+public record ResourceType(String translationKey, int color, int minYield, int maxYield, boolean enabled, java.util.Optional<net.minecraft.resources.Identifier> requiredItemTag, boolean automatic, ResourceCategory category) {
     private static final Codec<ResourceType> FIELDS = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("translation_key").forGetter(ResourceType::translationKey),
             Codec.intRange(0, 0xFFFFFF).fieldOf("color").forGetter(ResourceType::color),
             Codec.intRange(1, 64).fieldOf("min_yield").forGetter(ResourceType::minYield),
             Codec.intRange(1, 64).fieldOf("max_yield").forGetter(ResourceType::maxYield),
             Codec.BOOL.optionalFieldOf("enabled", true).forGetter(ResourceType::enabled),
-            net.minecraft.resources.ResourceLocation.CODEC.optionalFieldOf("required_item_tag").forGetter(ResourceType::requiredItemTag),
+            net.minecraft.resources.Identifier.CODEC.optionalFieldOf("required_item_tag").forGetter(ResourceType::requiredItemTag),
             Codec.BOOL.optionalFieldOf("automatic", false).forGetter(ResourceType::automatic),
             ResourceCategory.CODEC.optionalFieldOf("category", ResourceCategory.MATERIALS).forGetter(ResourceType::category)
     ).apply(instance, ResourceType::new));

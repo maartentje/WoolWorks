@@ -10,8 +10,8 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class MachineMenu extends AbstractContainerMenu {
     private final boolean extractor;
@@ -20,10 +20,10 @@ public class MachineMenu extends AbstractContainerMenu {
     private final ContainerLevelAccess access;
 
     public static MachineMenu generatorClient(int id, Inventory player) {
-        return new MachineMenu(id, player, false, new ItemStackHandler(1), new SimpleContainerData(12), ContainerLevelAccess.NULL);
+        return new MachineMenu(id, player, false, new ItemStacksResourceHandler(1), new SimpleContainerData(12), ContainerLevelAccess.NULL);
     }
     public static MachineMenu extractorClient(int id, Inventory player) {
-        return new MachineMenu(id, player, true, new ItemStackHandler(3), new SimpleContainerData(12), ContainerLevelAccess.NULL);
+        return new MachineMenu(id, player, true, new ItemStacksResourceHandler(3), new SimpleContainerData(12), ContainerLevelAccess.NULL);
     }
     public static MachineMenu generator(int id, Inventory player, GeneratorBlockEntity entity) {
         return new MachineMenu(id, player, false, entity.fuel(), entity.menuData(), ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos()));
@@ -32,18 +32,18 @@ public class MachineMenu extends AbstractContainerMenu {
         return new MachineMenu(id, player, true, entity.inventory(), entity.menuData(), ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos()));
     }
 
-    private MachineMenu(int id, Inventory player, boolean extractor, ItemStackHandler items, ContainerData data, ContainerLevelAccess access) {
+    private MachineMenu(int id, Inventory player, boolean extractor, ItemStacksResourceHandler items, ContainerData data, ContainerLevelAccess access) {
         super(extractor ? ModMachines.EXTRACTOR_MENU.get() : ModMachines.GENERATOR_MENU.get(), id);
         this.extractor = extractor;
         this.machineSlots = extractor ? 3 : 1;
         this.data = data;
         this.access = access;
-        addSlot(new SlotItemHandler(items, 0, extractor ? 56 : 91, extractor ? 35 : 49));
+        addSlot(new ResourceHandlerSlot(items, items::set, 0, extractor ? 56 : 91, extractor ? 35 : 49));
         if (extractor) {
-            addSlot(new SlotItemHandler(items, 1, 116, 35) {
+            addSlot(new ResourceHandlerSlot(items, items::set, 1, 116, 35) {
                 @Override public boolean mayPlace(ItemStack stack) { return false; }
             });
-            addSlot(new SlotItemHandler(items, 2, 152, 59) {
+            addSlot(new ResourceHandlerSlot(items, items::set, 2, 152, 59) {
                 @Override public boolean mayPlace(ItemStack stack) { return be.maarten.woolworks.item.ExtractorUpgradeItem.limit(stack) > 0; }
                 @Override public int getMaxStackSize(ItemStack stack) { return Math.min(stack.getMaxStackSize(), be.maarten.woolworks.item.ExtractorUpgradeItem.limit(stack)); }
             });
@@ -82,7 +82,7 @@ public class MachineMenu extends AbstractContainerMenu {
         } else if (!moveItemStackTo(stack, 0, 1, false)) {
             return ItemStack.EMPTY;
         }
-        if (stack.isEmpty()) slot.set(ItemStack.EMPTY); else slot.setChanged();
+        slot.set(stack.isEmpty() ? ItemStack.EMPTY : stack);
         slot.onTake(player, stack);
         return original;
     }

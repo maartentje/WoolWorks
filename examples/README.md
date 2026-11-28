@@ -1,10 +1,10 @@
 # Wool Works compatibility test examples
 
-These examples target **Minecraft 1.21.1, NeoForge 21.1.x, Wool Works, KubeJS 7 and Mekanism** in a disposable CurseForge instance/world. They are manual compatibility tests, not production balance recommendations. Back up worlds before testing. The examples do not edit the mod's default files.
+These examples target **Minecraft 26.1.2 NeoForge**. They are manual test leads, not production balance recommendations. Back up worlds before testing.
 
 ## Validation status
 
-The JSON formats and IDs were checked against Wool Works' current serializers and built-in recipes; `pack_format: 48` is for Minecraft 1.21/1.21.1. The custom resource and its recipes were loaded as development-server resources in a dedicated GameTest run: a focused test verified availability, Feed crafting and extraction output. This did not test installation as a standalone world datapack or client display. **None of the KubeJS examples has been runtime-tested in an external KubeJS/Mekanism instance.** In particular, adding and removing Wool Works' custom recipe serializers through KubeJS must be verified in-game. Mekanism's published 1.21.x tag data identifies `mekanism:ingot_tin` and `mekanism:block_tin`, but this is not a runtime compatibility claim.
+The examples use 26.1.2 ingredient strings, `neoforge:ingredient_type` and datapack format 101.1. A resource-definition override and modded resources were tested during the port, but this exact example datapack and the KubeJS script have not been independently tested on 26.1.2. Check the material provider's actual item IDs and tags before running the examples.
 
 ## Setup
 

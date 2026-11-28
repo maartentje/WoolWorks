@@ -3,6 +3,8 @@ package be.maarten.woolworks.machine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -19,17 +21,17 @@ public abstract class MufflableBlockEntity extends BlockEntity {
     }
     public MuffleMode muffleMode() { return mode; }
     public void cycleMuffleMode() {
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide()) return;
         mode = mode.next(sheepModes); setChanged(); onMuffleModeChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
     protected void onMuffleModeChanged() {}
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries); tag.putInt("MuffleMode", mode.ordinal());
+    @Override protected void saveAdditional(ValueOutput tag) {
+        super.saveAdditional(tag); tag.putInt("MuffleMode", mode.ordinal());
     }
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        MuffleMode loaded = MuffleMode.read(tag.getInt("MuffleMode"), sheepModes);
+    @Override protected void loadAdditional(ValueInput tag) {
+        super.loadAdditional(tag);
+        MuffleMode loaded = MuffleMode.read(tag.getIntOr("MuffleMode", 0), sheepModes);
         if (mode != loaded) { mode = loaded; onMuffleModeChanged(); }
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return saveCustomOnly(registries); }

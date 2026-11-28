@@ -1,1 +1,1 @@
-{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:rabbit_hide","recipe":{"ingredients":[{"item":"minecraft:wheat"},{"item":"minecraft:rabbit_hide"}],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:rabbit_hide"}}}}
+{"type":"woolworks:resource_conditional_crafting","required_resource":"woolworks:rabbit_hide","recipe":{"ingredients":["minecraft:wheat","minecraft:rabbit_hide"],"result":{"id":"woolworks:resource_feed","count":1,"components":{"woolworks:resource_type":"woolworks:rabbit_hide"}}}}
