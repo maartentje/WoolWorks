@@ -55,7 +55,7 @@ final class ResourceSelectionScreen extends Screen {
                 ResourceType type = entry.getValue();
                 boolean hasTag = type.requiredItemTag().map(id -> BuiltInRegistries.ITEM
                         .get(TagKey.create(Registries.ITEM, id)).map(tag -> tag.iterator().hasNext()).orElse(false)).orElse(true);
-                if (hasTag || !type.automatic()) resources.add(new ResourceEntry(entry.getKey().location(), type, hasTag));
+                if (hasTag || !type.automatic()) resources.add(new ResourceEntry(entry.getKey().identifier(), type, hasTag));
             });
             resources.sort(Comparator.comparing((ResourceEntry entry) -> entry.name().getString().toLowerCase(Locale.ROOT))
                     .thenComparing(entry -> entry.id().toString()));
