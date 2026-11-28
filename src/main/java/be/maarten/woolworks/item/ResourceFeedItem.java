@@ -12,7 +12,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -24,9 +25,9 @@ public class ResourceFeedItem extends ResourceItem {
         var id = stack.get(ModComponents.RESOURCE_TYPE);
         if (!ResourceTypes.enabled(sheep.level(), id)) return InteractionResult.PASS;
         if (!(sheep.level() instanceof ServerLevel level)) return InteractionResult.SUCCESS;
-        ResourceSheep replacement = ModEntities.RESOURCE_SHEEP.get().create(level);
+        ResourceSheep replacement = ModEntities.RESOURCE_SHEEP.get().create(level, EntitySpawnReason.CONVERSION);
         if (replacement == null) return InteractionResult.FAIL;
-        replacement.moveTo(sheep.getX(), sheep.getY(), sheep.getZ(), sheep.getYRot(), sheep.getXRot());
+        replacement.snapTo(sheep.getX(), sheep.getY(), sheep.getZ(), sheep.getYRot(), sheep.getXRot());
         replacement.setResourceId(id);
         replacement.setSheared(sheep.isSheared());
         replacement.setCustomName(sheep.getCustomName());

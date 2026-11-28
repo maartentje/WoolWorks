@@ -11,6 +11,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.item.DyeColor;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -40,7 +41,7 @@ public final class InvalidResourceSheepConversion {
         PENDING.remove(server);
         for (var sheep : pending) {
             if (sheep.isRemoved() || !sheep.isAddedToLevel() || !(sheep.level() instanceof ServerLevel level)) continue;
-            if (level.registryAccess().registry(ResourceTypes.REGISTRY).isEmpty()) {
+            if (level.registryAccess().lookup(ResourceTypes.REGISTRY).isEmpty()) {
                 PENDING.computeIfAbsent(server, ignored -> new ArrayList<>()).add(sheep);
             } else if (!ResourceTypes.enabled(level, sheep.resourceId())) {
                 convert(level, sheep);
@@ -49,7 +50,7 @@ public final class InvalidResourceSheepConversion {
     }
 
     private static void convert(ServerLevel level, ResourceSheep source) {
-        var sheep = EntityType.SHEEP.create(level);
+        var sheep = EntityType.SHEEP.create(level, EntitySpawnReason.CONVERSION);
         if (sheep == null) return;
         sheep.copyPosition(source);
         sheep.setDeltaMovement(source.getDeltaMovement());
@@ -76,7 +77,7 @@ public final class InvalidResourceSheepConversion {
         if (source.isPassenger()) {
             var vehicle = source.getVehicle();
             source.stopRiding();
-            sheep.startRiding(vehicle, true);
+            sheep.startRiding(vehicle, true, true);
         }
         source.discard();
     }

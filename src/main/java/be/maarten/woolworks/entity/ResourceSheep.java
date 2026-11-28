@@ -3,22 +3,22 @@ package be.maarten.woolworks.entity;
 import be.maarten.woolworks.registry.ModItems;
 import be.maarten.woolworks.resource.ResourceType;
 import be.maarten.woolworks.resource.ResourceTypes;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.loot.LootTable;
-import net.minecraft.resources.ResourceKey;
 import java.util.Optional;
 
 public class ResourceSheep extends Sheep {
@@ -28,24 +28,24 @@ public class ResourceSheep extends Sheep {
 
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(RESOURCE, "woolworks:iron");
+        builder.define(RESOURCE, "");
     }
 
-    public ResourceLocation resourceId() { return ResourceLocation.tryParse(entityData.get(RESOURCE)); }
-    public void setResourceId(ResourceLocation id) { entityData.set(RESOURCE, id.toString()); }
+    public Identifier resourceId() { return Identifier.tryParse(entityData.get(RESOURCE)); }
+    public void setResourceId(Identifier id) { entityData.set(RESOURCE, id.toString()); }
     public Optional<ResourceType> resourceType() {
-        ResourceLocation id = resourceId();
-        return id == null ? Optional.empty() : level().registryAccess().registry(ResourceTypes.REGISTRY).map(reg -> reg.get(id));
+        Identifier id = resourceId();
+        return id == null ? Optional.empty() : level().registryAccess().lookup(ResourceTypes.REGISTRY).map(reg -> reg.getValue(id));
     }
 
-    @Override public void addAdditionalSaveData(CompoundTag tag) {
+    @Override protected void addAdditionalSaveData(ValueOutput tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("ResourceType", entityData.get(RESOURCE));
     }
 
-    @Override public void readAdditionalSaveData(CompoundTag tag) {
+    @Override protected void readAdditionalSaveData(ValueInput tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("ResourceType", 8)) entityData.set(RESOURCE, tag.getString("ResourceType"));
+        tag.getString("ResourceType").ifPresent(value -> entityData.set(RESOURCE, value));
     }
 
     @Override protected Component getTypeName() {
@@ -60,18 +60,16 @@ public class ResourceSheep extends Sheep {
     // DyeItem calls setColor directly. Rendering also ignores the vanilla color.
     @Override public void setColor(DyeColor color) { }
 
-    @Override public ResourceKey<LootTable> getDefaultLootTable() { return getType().getDefaultLootTable(); }
-
-    @Override public void shear(SoundSource source) {
-        if (level().isClientSide || !readyForShearing()) return;
-        level().playSound(null, this, SoundEvents.SHEEP_SHEAR, source, 1.0F, 1.0F);
+    @Override public void shear(ServerLevel level, SoundSource source, ItemStack tool) {
+        if (!readyForShearing()) return;
+        level.playSound(null, this, SoundEvents.SHEEP_SHEAR, source, 1.0F, 1.0F);
         setSheared(true);
-        ResourceLocation id = resourceId();
+        Identifier id = resourceId();
         resourceType().ifPresent(type -> {
             int count = type.minYield() + random.nextInt(type.maxYield() - type.minYield() + 1);
             ItemStack stack = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
             stack.setCount(count);
-            spawnAtLocation(stack, 1.0F);
+            spawnAtLocation(level, stack, 1.0F);
         });
     }
 }
