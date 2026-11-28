@@ -68,7 +68,7 @@ public final class WoolWorksJeiPlugin implements IModPlugin {
         registration.addRecipes(MachineCategories.FUEL, fuels);
         registration.addRecipes(MachineCategories.EXTRACTION, snapshot.extraction().stream()
                 .filter(holder -> MachineRecipeConditions.matches(level, holder.value().requiredResource(), Optional.empty()))
-                .filter(holder -> !holder.value().ingredient().hasNoItems())
+                .filter(holder -> !holder.value().ingredient().isEmpty())
                 .filter(holder -> !holder.value().getResultItem(level.registryAccess()).isEmpty()).toList());
     }
 
