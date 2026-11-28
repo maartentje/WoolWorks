@@ -1,6 +1,7 @@
 package be.maarten.woolworks.item;
 
-import java.util.List;
+import java.util.function.Consumer;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
@@ -21,10 +22,10 @@ public class CableItem extends BlockItem {
         if (changed && level.getBlockEntity(pos) instanceof CableBlockEntity cable) cable.refreshNetworkRegistration();
         return changed;
     }
-    @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+    @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> lines, TooltipFlag flag) {
         var rate = be.maarten.woolworks.machine.MachineConfig.CABLE_TRANSFER_RATE;
-        lines.add(Component.translatable("item.woolworks.wool_insulated_cable.rate", be.maarten.woolworks.machine.MachineConfig.SPEC.isLoaded() ? rate.get() : rate.getDefault()).withStyle(ChatFormatting.GRAY));
-        lines.add(Component.translatable("item.woolworks.wool_insulated_cable.extract").withStyle(ChatFormatting.GRAY));
-        lines.add(Component.translatable("item.woolworks.wool_insulated_cable.pickup").withStyle(ChatFormatting.GRAY));
+        lines.accept(Component.translatable("item.woolworks.wool_insulated_cable.rate", be.maarten.woolworks.machine.MachineConfig.SPEC.isLoaded() ? rate.get() : rate.getDefault()).withStyle(ChatFormatting.GRAY));
+        lines.accept(Component.translatable("item.woolworks.wool_insulated_cable.extract").withStyle(ChatFormatting.GRAY));
+        lines.accept(Component.translatable("item.woolworks.wool_insulated_cable.pickup").withStyle(ChatFormatting.GRAY));
     }
 }
