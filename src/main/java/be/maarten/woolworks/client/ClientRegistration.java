@@ -30,13 +30,7 @@ public final class ClientRegistration {
     }
 
     @SubscribeEvent
-    public static void colors(RegisterColorHandlersEvent.Item event) {
-        event.register((stack, index) -> {
-            var level = Minecraft.getInstance().level;
-            var id = stack.get(ModComponents.RESOURCE_TYPE);
-            if (index != 1 || level == null || id == null) return -1;
-            return level.registryAccess().registry(ResourceTypes.REGISTRY)
-                    .map(registry -> registry.get(id)).map(type -> 0xFF000000 | type.color()).orElse(-1);
-        }, ModItems.RESOURCE_FEED.get(), ModItems.INFUSED_WOOL.get());
+    public static void colors(RegisterColorHandlersEvent.ItemTintSources event) {
+        event.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(WoolWorks.MODID, "resource"), ResourceTintSource.CODEC);
     }
 }

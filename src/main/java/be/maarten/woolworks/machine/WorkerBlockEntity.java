@@ -21,7 +21,9 @@ import net.neoforged.neoforge.common.IShearable;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -122,14 +124,18 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
         return remainder;
     }
     private boolean canStoreAll(List<ItemStack> drops) {
-        ItemStackHandler copy = new ItemStackHandler(18);
-        for (int slot = 0; slot < 18; slot++) copy.setStackInSlot(slot, inventory.getStackInSlot(slot + 2).copy());
-        for (ItemStack drop : drops) {
-            ItemStack left = drop.copy();
-            for (int slot = 0; slot < 18 && !left.isEmpty(); slot++) left = copy.insertItem(slot, left, false);
-            if (!left.isEmpty()) return false;
+        var copy = new ItemStacksResourceHandler(18);
+        for (int slot = 0; slot < 18; slot++) {
+            var stack = inventory.getStackInSlot(slot + 2);
+            copy.set(slot, ItemResource.of(stack), stack.getCount());
         }
-        return true;
+        try (var tx = Transaction.openRoot()) {
+            for (ItemStack drop : drops) {
+                if (drop.isEmpty()) continue;
+                if (copy.insert(ItemResource.of(drop), drop.getCount(), tx) != drop.getCount()) return false;
+            }
+            return true;
+        }
     }
     private ItemStack minimumWool(Sheep sheep) {
         if (sheep instanceof ResourceSheep resource) {
@@ -231,4 +237,14 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return saveCustomOnly(registries); }
     @Override public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() { return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this); }
+
+    @Override public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level instanceof net.minecraft.server.level.ServerLevel) {
+            for (int i = 0; i < inventory().getSlots(); i++) {
+                var stack = inventory().getStackInSlot(i);
+                if (!stack.isEmpty()) net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+            }
+        }
+    }
 }

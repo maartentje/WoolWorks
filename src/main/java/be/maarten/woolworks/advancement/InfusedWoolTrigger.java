@@ -6,9 +6,9 @@ import be.maarten.woolworks.resource.ResourceTypes;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
-import net.minecraft.advancements.critereon.ContextAwarePredicate;
-import net.minecraft.advancements.critereon.EntityPredicate;
-import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
+import net.minecraft.advancements.criterion.ContextAwarePredicate;
+import net.minecraft.advancements.criterion.EntityPredicate;
+import net.minecraft.advancements.criterion.SimpleCriterionTrigger;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -18,7 +18,7 @@ public final class InfusedWoolTrigger extends SimpleCriterionTrigger<InfusedWool
     public void inventoryChanged(ServerPlayer player, ItemStack stack) {
         var id = stack.get(ModComponents.RESOURCE_TYPE);
         if (stack.is(ModItems.INFUSED_WOOL.get()) && id != null
-                && player.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).containsKey(id)) {
+                && player.registryAccess().lookupOrThrow(ResourceTypes.REGISTRY).containsKey(id)) {
             trigger(player, instance -> true);
         }
     }

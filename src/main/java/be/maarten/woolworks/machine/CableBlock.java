@@ -31,7 +31,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.BlockGetter;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.CommonHooks;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
 public class CableBlock extends BaseEntityBlock {
@@ -101,7 +100,7 @@ public class CableBlock extends BaseEntityBlock {
             ItemStack cableItem = new ItemStack(ModMachines.CABLE_ITEM.get());
             if (level.getBlockEntity(pos) instanceof CableBlockEntity cable) cable.preservePending(cableItem);
             if (!level.removeBlock(pos, false)) return InteractionResult.FAIL;
-            if (!player.getAbilities().instabuild) ItemHandlerHelper.giveItemToPlayer(player, cableItem);
+            if (!player.getAbilities().instabuild) player.getInventory().placeItemBackInInventory(cableItem);
             return InteractionResult.CONSUME;
         }
         Direction side = hitSide(pos, hit);

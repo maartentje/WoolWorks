@@ -95,7 +95,7 @@ public class CableBlockEntity extends BlockEntity {
             BlockPos neighbor = worldPosition.relative(side);
             if (!level.hasChunkAt(neighbor) || level.getBlockState(neighbor).is(ModMachines.CABLE.get())) continue;
             var source = level.getCapability(Capabilities.Energy.BLOCK, neighbor, side.getOpposite());
-            if (source == null) continue;
+            if (source == null) { setExtracting(side, false); continue; }
             int request = MachineConfig.CABLE_TRANSFER_RATE.get();
             // Retry a partially accepted transfer with the exact accepted amount. Each failed
             // attempt rolls back source, destinations and route reservations together.

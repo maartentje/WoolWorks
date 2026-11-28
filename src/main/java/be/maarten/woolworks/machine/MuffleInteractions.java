@@ -6,14 +6,14 @@ import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraft.util.TriState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,14 +29,14 @@ public final class MuffleInteractions {
                 && holdingMuffler(event.getEntity()) && event.getLevel().getBlockEntity(event.getPos()) instanceof MufflableBlockEntity)
             event.setUseBlock(TriState.TRUE);
     }
-    @Nullable public static ItemInteractionResult use(Level level, BlockPos pos, Player player, BlockHitResult hit) {
+    @Nullable public static InteractionResult use(Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!holdingMuffler(player)) return null;
-        if (!level.mayInteract(player, pos) || !player.mayUseItemAt(pos, hit.getDirection(), player.getMainHandItem().is(ModItems.MUFFLER.get()) ? player.getMainHandItem() : player.getOffhandItem())) return ItemInteractionResult.FAIL;
-        if (!level.isClientSide && player instanceof ServerPlayer server && level.getBlockEntity(pos) instanceof MufflableBlockEntity machine) {
-            if (server.blockActionRestricted(level, pos, server.gameMode.getGameModeForPlayer())) return ItemInteractionResult.FAIL;
+        if (!level.mayInteract(player, pos) || !player.mayUseItemAt(pos, hit.getDirection(), player.getMainHandItem().is(ModItems.MUFFLER.get()) ? player.getMainHandItem() : player.getOffhandItem())) return InteractionResult.FAIL;
+        if (!level.isClientSide() && player instanceof ServerPlayer server && level.getBlockEntity(pos) instanceof MufflableBlockEntity machine) {
+            if (server.blockActionRestricted(level, pos, server.gameMode.getGameModeForPlayer())) return InteractionResult.FAIL;
             machine.cycleMuffleMode();
-            player.displayClientMessage(Component.translatable("message.woolworks.muffle." + machine.muffleMode().name().toLowerCase(Locale.ROOT)), true);
+            server.sendOverlayMessage(Component.translatable("message.woolworks.muffle." + machine.muffleMode().name().toLowerCase(Locale.ROOT)));
         }
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        return (level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME);
     }
 }

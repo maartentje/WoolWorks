@@ -2,17 +2,11 @@ package be.maarten.woolworks.machine;
 
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-@GameTestHolder("woolworks")
-@PrefixGameTestTemplate(false)
 public final class CableNetworkGameTests {
     private CableNetworkGameTests() {}
 
-    @GameTest(template = "empty")
     public static void invalidationDuringRouteDiscovery(GameTestHelper helper) {
         var state = new CableNetworks.NetworkState();
         var root = BlockPos.ZERO;

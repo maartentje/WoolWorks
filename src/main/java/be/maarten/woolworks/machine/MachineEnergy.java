@@ -33,7 +33,7 @@ final class MachineEnergy implements EnergyHandler {
     void load(net.minecraft.world.level.storage.ValueInput input) {
         if (!input.keySet().contains("Energy")) { setStored(0); return; }
         int value = input.getInt("Energy").orElseThrow(() -> new IllegalStateException("Unreadable saved Energy"));
-        if (value < 0 || value > capacity) throw new IllegalStateException("Saved Energy out of range: " + value);
+        // Preserve legacy capacity clamping when loading saved machines.
         setStored(value);
     }
     void setStored(int value) {

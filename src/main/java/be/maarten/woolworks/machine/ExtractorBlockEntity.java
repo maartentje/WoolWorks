@@ -178,4 +178,15 @@ public class ExtractorBlockEntity extends MufflableBlockEntity {
     private static ItemStack readStack(net.minecraft.world.level.storage.ValueInput in, String key) {
         return in.keySet().contains(key) ? in.read(key, ItemStack.CODEC).orElseThrow(() -> new IllegalStateException("Unreadable " + key)) : ItemStack.EMPTY;
     }
+
+    @Override public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level instanceof net.minecraft.server.level.ServerLevel) {
+            dropRecovered();
+            for (int i = 0; i < inventory().getSlots(); i++) {
+                var stack = inventory().getStackInSlot(i);
+                if (!stack.isEmpty()) net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
+            }
+        }
+    }
 }

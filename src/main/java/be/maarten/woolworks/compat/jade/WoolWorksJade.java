@@ -6,17 +6,17 @@ import be.maarten.woolworks.machine.*;
 import java.util.Locale;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import snownee.jade.api.*;
 import snownee.jade.api.config.IPluginConfig;
 
 @WailaPlugin
 public final class WoolWorksJade implements IWailaPlugin {
     @Override public void register(IWailaCommonRegistration registration) {
-        registration.registerBlockDataProvider(Blocks.INSTANCE, GeneratorBlockEntity.class);
-        registration.registerBlockDataProvider(Blocks.INSTANCE, ExtractorBlockEntity.class);
-        registration.registerBlockDataProvider(Blocks.INSTANCE, WorkerBlockEntity.class);
-        registration.registerBlockDataProvider(Blocks.INSTANCE, CableBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, GeneratorBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, ExtractorBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, WorkerBlockEntity.class);
+        registration.registerBlockDataProvider(BlockData.INSTANCE, CableBlockEntity.class);
     }
     @Override public void registerClient(IWailaClientRegistration registration) {
         registration.registerBlockComponent(Blocks.INSTANCE, GeneratorBlock.class);
@@ -25,12 +25,12 @@ public final class WoolWorksJade implements IWailaPlugin {
         registration.registerBlockComponent(Blocks.INSTANCE, CableBlock.class);
         registration.registerEntityComponent(Sheep.INSTANCE, ResourceSheep.class);
     }
-    private static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath(WoolWorks.MODID, name); }
+    private static Identifier id(String name) { return Identifier.fromNamespaceAndPath(WoolWorks.MODID, name); }
     private static String seconds(long ticks) { return String.format(Locale.ROOT, "%.1f", ticks / 20.0); }
 
-    private enum Blocks implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private enum BlockData implements IServerDataProvider<BlockAccessor> {
         INSTANCE;
-        @Override public ResourceLocation getUid() { return id("machine_information"); }
+        @Override public Identifier getUid() { return id("machine_information"); }
         @Override public void appendServerData(CompoundTag tag, BlockAccessor accessor) {
             var entity = accessor.getBlockEntity();
             if (entity instanceof MufflableBlockEntity machine) tag.putString("ww_mode", machine.muffleMode().name());
@@ -54,27 +54,31 @@ public final class WoolWorksJade implements IWailaPlugin {
                 tag.putInt("ww_rate", MachineConfig.CABLE_TRANSFER_RATE.get());
             }
         }
+    }
+    private enum Blocks implements IBlockComponentProvider {
+        INSTANCE;
+        @Override public Identifier getUid() { return id("machine_information"); }
         @Override public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
             CompoundTag tag = accessor.getServerData();
-            String kind = tag.getString("ww_kind");
-            long ticks = tag.getLong("ww_ticks");
+            String kind = tag.getString("ww_kind").orElse("");
+            long ticks = tag.getLong("ww_ticks").orElse(0L);
             switch (kind) {
-                case "generator" -> tooltip.add(Component.translatable("jade.woolworks.generation", tag.getInt("ww_rate")));
-                case "extractor" -> tooltip.add(Component.translatable("jade.woolworks.extraction", tag.getInt("ww_progress") / 10.0));
-                case "worker" -> tooltip.add(Component.translatable("jade.woolworks.area", tag.getInt("ww_area"), tag.getInt("ww_area")));
-                case "cable" -> tooltip.add(Component.translatable("jade.woolworks.transfer", tag.getInt("ww_rate")));
+                case "generator" -> tooltip.add(Component.translatable("jade.woolworks.generation", tag.getInt("ww_rate").orElse(0)));
+                case "extractor" -> tooltip.add(Component.translatable("jade.woolworks.extraction", tag.getInt("ww_progress").orElse(0) / 10.0));
+                case "worker" -> tooltip.add(Component.translatable("jade.woolworks.area", tag.getInt("ww_area").orElse(0), tag.getInt("ww_area").orElse(0)));
+                case "cable" -> tooltip.add(Component.translatable("jade.woolworks.transfer", tag.getInt("ww_rate").orElse(0)));
             }
             if (ticks > 0) {
                 tooltip.add(Component.translatable("gui.woolworks.time_remaining", seconds(ticks)));
-                if (!tag.getBoolean("ww_processing")) tooltip.add(Component.translatable("gui.woolworks.paused"));
+                if (!tag.getBoolean("ww_processing").orElse(false)) tooltip.add(Component.translatable("gui.woolworks.paused"));
             }
-            String mode = tag.getString("ww_mode");
+            String mode = tag.getString("ww_mode").orElse("");
             if (!mode.isEmpty() && !mode.equals("OFF")) tooltip.add(Component.translatable("jade.woolworks.muffle", Component.translatable("woolworks.muffle." + mode.toLowerCase(Locale.ROOT))));
         }
     }
     private enum Sheep implements IEntityComponentProvider {
         INSTANCE;
-        @Override public ResourceLocation getUid() { return id("resource_sheep"); }
+        @Override public Identifier getUid() { return id("resource_sheep"); }
         @Override public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
             if (!(accessor.getEntity() instanceof ResourceSheep sheep)) return;
             sheep.resourceType().ifPresent(type -> tooltip.add(Component.translatable("jade.woolworks.resource", Component.translatable(type.translationKey()))));

@@ -7,7 +7,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.SimpleMenuProvider;
@@ -28,11 +27,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 public class ExtractorBlock extends BaseEntityBlock {
     public static final MapCodec<ExtractorBlock> CODEC = simpleCodec(ExtractorBlock::new);
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty ACTIVE = BlockStateProperties.LIT;
     public ExtractorBlock(Properties properties) { super(properties); registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ACTIVE, false)); }
     @Override public BlockState getStateForPlacement(BlockPlaceContext context) { return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite()); }
@@ -42,27 +41,17 @@ public class ExtractorBlock extends BaseEntityBlock {
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new ExtractorBlockEntity(pos, state); }
-    @Override protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    @Override protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         var result = MuffleInteractions.use(level, pos, player, hit);
-        return result == null ? ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION : result;
+        return result == null ? InteractionResult.TRY_WITH_EMPTY_HAND : result;
     }
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof ExtractorBlockEntity extractor) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof ExtractorBlockEntity extractor) {
             player.openMenu(new SimpleMenuProvider((id, inventory, p) -> MachineMenu.extractor(id, inventory, extractor), Component.translatable("block.woolworks.wool_extractor")));
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return (level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.CONSUME);
     }
     @Nullable @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModMachines.EXTRACTOR_ENTITY.get(), ExtractorBlockEntity::tick);
-    }
-    @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState next, boolean moving) {
-        if (!state.is(next.getBlock()) && level instanceof ServerLevel && level.getBlockEntity(pos) instanceof ExtractorBlockEntity entity) {
-            entity.dropRecovered();
-            for (int i = 0; i < entity.inventory().getSlots(); i++) {
-                var stack = entity.inventory().getStackInSlot(i);
-                if (!stack.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
-            }
-        }
-        super.onRemove(state, level, pos, next, moving);
+        return level.isClientSide() ? null : createTickerHelper(type, ModMachines.EXTRACTOR_ENTITY.get(), ExtractorBlockEntity::tick);
     }
 }

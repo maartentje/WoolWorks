@@ -1,6 +1,6 @@
 package be.maarten.woolworks.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
@@ -21,9 +21,9 @@ final class ConfigAvailabilityScreen extends Screen {
         addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, b -> onClose()).bounds(width / 2 - 100, height / 2 + 45, 200, 20).build());
     }
     @Override public void onClose() { minecraft.setScreen(parent); }
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(font, title, width / 2, height / 2 - 55, 0xffffff);
-        graphics.drawWordWrap(font, Component.translatable("woolworks.resources.unavailable"), width / 2 - 150, height / 2 - 35, 300, 0xffffff);
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        graphics.centeredText(font, title, width / 2, height / 2 - 55, 0xffffffff);
+        graphics.textWithWordWrap(font, Component.translatable("woolworks.resources.unavailable"), width / 2 - 150, height / 2 - 35, 300, 0xffffffff);
     }
 }

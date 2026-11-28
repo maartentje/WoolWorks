@@ -2,7 +2,7 @@ package be.maarten.woolworks.mixin.client;
 
 import be.maarten.woolworks.machine.SheepGrassEffects;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LevelEventHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(LevelRenderer.class)
+@Mixin(LevelEventHandler.class)
 public abstract class LevelRendererGrassEffectMixin {
-    @Shadow private ClientLevel level;
+    @Shadow @org.spongepowered.asm.mixin.Final private ClientLevel level;
 
     @Inject(method = "levelEvent", at = @At("HEAD"), cancellable = true)
     private void woolworks$silentGrassParticles(int type, BlockPos pos, int data, CallbackInfo callback) {
