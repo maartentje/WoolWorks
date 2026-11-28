@@ -23,7 +23,7 @@ final class ConfigAvailabilityScreen extends Screen {
     @Override public void onClose() { minecraft.setScreen(parent); }
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-        graphics.centeredText(font, title, width / 2, height / 2 - 55, 0xffffff);
-        graphics.textWithWordWrap(font, Component.translatable("woolworks.resources.unavailable"), width / 2 - 150, height / 2 - 35, 300, 0xffffff);
+        graphics.centeredText(font, title, width / 2, height / 2 - 55, 0xffffffff);
+        graphics.textWithWordWrap(font, Component.translatable("woolworks.resources.unavailable"), width / 2 - 150, height / 2 - 35, 300, 0xffffffff);
     }
 }
