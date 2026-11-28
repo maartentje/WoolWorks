@@ -8,7 +8,7 @@
 
 ![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-5C8A3C)
 ![NeoForge](https://img.shields.io/badge/Mod%20loader-NeoForge-orange)
-![Release 1.0.0](https://img.shields.io/badge/Release-1.0.0-blueviolet)
+![Release 1.0.1](https://img.shields.io/badge/Release-1.0.1-blueviolet)
 [![CurseForge](https://img.shields.io/badge/Download-CurseForge-orange)](https://www.curseforge.com/minecraft/mc-mods/wool-works)
 
 Craft special feed, transform ordinary sheep into resource sheep, and shear their Infused Wool. Extract the resources you need—or turn wool into energy to keep your farm running.

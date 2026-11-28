@@ -14,6 +14,8 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 
 ## Machines and upgrades
 
+- Break the Wool Generator, Wool Extractor and Wool Worker with a pickaxe in survival; verify each machine and its stored inventory drop exactly once.
+
 - Insert valid and invalid Infused Wool into a generator; check FE output, light, progress, full-buffer pauses, item automation and any migrated remainder.
 - Extract iron wool with a hopper or pipe on each side. Check progress, energy use, idle and paused states, output blocking and persistence after reload.
 - Install up to eight Speed or two Overdrive Upgrades; check speed, output and FE usage, mixing rejection, manual-only upgrade slots and progress reset after changing upgrades. JEI should show base recipe values.
