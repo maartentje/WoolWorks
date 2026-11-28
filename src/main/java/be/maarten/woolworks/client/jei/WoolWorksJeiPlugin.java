@@ -73,7 +73,7 @@ public final class WoolWorksJeiPlugin implements IModPlugin {
     }
 
     @Override public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addRecipeCatalysts(MachineCategories.FUEL, ModMachines.GENERATOR_ITEM.get());
-        registration.addRecipeCatalysts(MachineCategories.EXTRACTION, ModMachines.EXTRACTOR_ITEM.get());
+        registration.addCraftingStation(MachineCategories.FUEL, ModMachines.GENERATOR_ITEM.get());
+        registration.addCraftingStation(MachineCategories.EXTRACTION, ModMachines.EXTRACTOR_ITEM.get());
     }
 }
