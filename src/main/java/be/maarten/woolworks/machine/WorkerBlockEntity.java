@@ -21,7 +21,9 @@ import net.neoforged.neoforge.common.IShearable;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -122,14 +124,18 @@ public class WorkerBlockEntity extends MufflableBlockEntity {
         return remainder;
     }
     private boolean canStoreAll(List<ItemStack> drops) {
-        ItemStackHandler copy = new ItemStackHandler(18);
-        for (int slot = 0; slot < 18; slot++) copy.setStackInSlot(slot, inventory.getStackInSlot(slot + 2).copy());
-        for (ItemStack drop : drops) {
-            ItemStack left = drop.copy();
-            for (int slot = 0; slot < 18 && !left.isEmpty(); slot++) left = copy.insertItem(slot, left, false);
-            if (!left.isEmpty()) return false;
+        var copy = new ItemStacksResourceHandler(18);
+        for (int slot = 0; slot < 18; slot++) {
+            var stack = inventory.getStackInSlot(slot + 2);
+            copy.set(slot, ItemResource.of(stack), stack.getCount());
         }
-        return true;
+        try (var tx = Transaction.openRoot()) {
+            for (ItemStack drop : drops) {
+                if (drop.isEmpty()) continue;
+                if (copy.insert(ItemResource.of(drop), drop.getCount(), tx) != drop.getCount()) return false;
+            }
+            return true;
+        }
     }
     private ItemStack minimumWool(Sheep sheep) {
         if (sheep instanceof ResourceSheep resource) {
