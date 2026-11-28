@@ -46,9 +46,8 @@ public class WorkerScreen extends AbstractContainerScreen<WorkerMenu> {
     }
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partial) {
         super.extractRenderState(graphics, x, y, partial);
-        extractTooltip(graphics, x, y);
         if (x >= leftPos + 9 && x < leftPos + 21 && y >= topPos + 25 && y < topPos + 79)
-            graphics.setTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.energy", menu.energy(), WorkerBlockEntity.CAPACITY), Component.translatable("gui.woolworks.worker.regrowth", WorkerBlockEntity.regrowthCost()), Component.translatable("gui.woolworks.worker.shearing", WorkerBlockEntity.shearingCost())), x, y);
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.energy", menu.energy(), WorkerBlockEntity.CAPACITY), Component.translatable("gui.woolworks.worker.regrowth", WorkerBlockEntity.regrowthCost()), Component.translatable("gui.woolworks.worker.shearing", WorkerBlockEntity.shearingCost())), x, y);
         else if (x >= leftPos + 34 && x < leftPos + 40 && y >= topPos + 44 && y < topPos + 59) {
             int interval = Math.max(1, menu.interval());
             int elapsed = Math.clamp(menu.elapsed(), 0, interval);
@@ -58,11 +57,11 @@ public class WorkerScreen extends AbstractContainerScreen<WorkerMenu> {
                 case WorkerBlockEntity.OUTPUT_FULL -> Component.translatable("gui.woolworks.worker.paused_output");
                 default -> Component.translatable("gui.woolworks.worker.next_operation", String.format(Locale.ROOT, "%.1f", (interval - elapsed) / 20.0));
             };
-            graphics.setTooltipForNextFrame(font, List.of(status,
+            graphics.setComponentTooltipForNextFrame(font, List.of(status,
                     Component.translatable("gui.woolworks.worker.interval", String.format(Locale.ROOT, "%.1f", interval / 20.0))), x, y);
         }
-        else if (hoveredSlot == menu.slots.get(0) && !hoveredSlot.hasItem()) graphics.setTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.shears"), Component.translatable("gui.woolworks.worker.shears_desc")), x, y);
-        else if (hoveredSlot == menu.slots.get(1) && !hoveredSlot.hasItem()) graphics.setTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.wheat"), Component.translatable("gui.woolworks.worker.wheat_desc")), x, y);
-        else if (area.isHovered()) graphics.setTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.area", menu.area(), menu.area()), Component.translatable("gui.woolworks.worker.cycle"), Component.translatable("gui.woolworks.worker.visualization")), x, y);
+        else if (hoveredSlot == menu.slots.get(0) && !hoveredSlot.hasItem()) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.shears"), Component.translatable("gui.woolworks.worker.shears_desc")), x, y);
+        else if (hoveredSlot == menu.slots.get(1) && !hoveredSlot.hasItem()) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.wheat"), Component.translatable("gui.woolworks.worker.wheat_desc")), x, y);
+        else if (area.isHovered()) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.woolworks.worker.area", menu.area(), menu.area()), Component.translatable("gui.woolworks.worker.cycle"), Component.translatable("gui.woolworks.worker.visualization")), x, y);
     }
 }
