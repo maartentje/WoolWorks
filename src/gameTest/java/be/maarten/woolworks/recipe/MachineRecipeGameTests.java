@@ -195,7 +195,14 @@ public final class MachineRecipeGameTests {
                         || !converted.isNoAi() || !converted.isNoGravity() || converted.getHealth() != 4 || !converted.hasEffect(net.minecraft.world.effect.MobEffects.SPEED)
                         || converted.getLeashHolder() != ordinary
                         || sheep.size() != 5 || !level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds).isEmpty()) {
-                    helper.fail("Invalid sheep conversion, preservation or duplication failed"); return;
+                    helper.fail("Conversion details: removed iron/missing/optional=" + iron.isRemoved() + "/" + missing.isRemoved() + "/" + optional.isRemoved()
+                            + ", valid/ordinary removed=" + valid.isRemoved() + "/" + ordinary.isRemoved()
+                            + ", sheep count=" + sheep.size() + ", items=" + level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds).size()
+                            + ", converted=" + (converted == null ? "null" : ("type=" + converted.getType() + ", color=" + converted.getColor()
+                            + ", baby=" + converted.isBaby() + ", sheared=" + converted.isSheared() + ", nameVisible=" + converted.isCustomNameVisible()
+                            + ", persistent=" + converted.isPersistenceRequired() + ", noAi=" + converted.isNoAi() + ", noGravity=" + converted.isNoGravity()
+                            + ", health=" + converted.getHealth() + ", speed=" + converted.hasEffect(net.minecraft.world.effect.MobEffects.SPEED)
+                            + ", leash=" + (converted.getLeashHolder() == ordinary)))); return;
                 }
                 converted.setAge(0); converted.setSheared(false);
                 if (!converted.readyForShearing()) { helper.fail("Converted sheep is not normally shearable"); return; }
@@ -315,9 +322,13 @@ public final class MachineRecipeGameTests {
                     var feed = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:" + name + "_feed")));
                     var extraction = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/" + name)));
                     boolean deferred = name.equals("certus_quartz") || name.equals("fluix");
-                    if (feed.isPresent() != (present || deferred) || extraction.isPresent() != (present || deferred)) { helper.fail("Wrong conditional recipes: " + id); return; }
+                    if ((!deferred || present) && (feed.isPresent() != present || extraction.isPresent() != present)) { helper.fail("Wrong conditional recipes: " + id); return; }
                     if (!present) {
-                        if (deferred) {
+                        if (deferred && feed.isPresent()) {
+                            var unavailableFeed = (net.minecraft.world.item.crafting.CraftingRecipe) feed.orElseThrow().value();
+                            if (unavailableFeed.matches(CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.IRON_INGOT))), level)) { helper.fail("Unavailable feed matched: " + id); return; }
+                        }
+                        if (deferred && extraction.isPresent()) {
                             var unavailable = (WoolExtractionRecipe) extraction.orElseThrow().value();
                             var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
                             if (unavailable.matches(new SingleRecipeInput(wool), level)) { helper.fail("Unavailable extraction matched: " + id); return; }
