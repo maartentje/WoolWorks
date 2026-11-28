@@ -19,7 +19,7 @@ import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.registration.ISubtypeRegistration;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -28,8 +28,8 @@ import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 
 @JeiPlugin
 public final class WoolWorksJeiPlugin implements IModPlugin {
-    @Override public ResourceLocation getPluginUid() {
-        return ResourceLocation.fromNamespaceAndPath(WoolWorks.MODID, "jei");
+    @Override public Identifier getPluginUid() {
+        return Identifier.fromNamespaceAndPath(WoolWorks.MODID, "jei");
     }
 
     @Override public void registerItemSubtypes(ISubtypeRegistration registration) {
@@ -57,14 +57,14 @@ public final class WoolWorksJeiPlugin implements IModPlugin {
         var recipes = level.getRecipeManager();
         var fuels = new ArrayList<RecipeHolder<GeneratorFuelRecipe>>();
         int index = 0;
-        for (var id : level.registryAccess().registryOrThrow(be.maarten.woolworks.resource.ResourceTypes.REGISTRY).keySet()) {
+        for (var id : level.registryAccess().lookupOrThrow(be.maarten.woolworks.resource.ResourceTypes.REGISTRY).keySet()) {
             if (!be.maarten.woolworks.resource.ResourceTypes.enabled(level, id)) continue;
             var stack = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
             var selected = be.maarten.woolworks.machine.GeneratorFuels.find(level, stack);
             if (selected.isEmpty()) continue;
             var fuel = selected.get();
             var recipe = new GeneratorFuelRecipe(DataComponentIngredient.of(true, stack), fuel.ticks(), fuel.energyPerTick(), Optional.empty(), Optional.empty());
-            fuels.add(new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(WoolWorks.MODID, "jei/infused_wool/" + index++), recipe));
+            fuels.add(new RecipeHolder<>(Identifier.fromNamespaceAndPath(WoolWorks.MODID, "jei/infused_wool/" + index++), recipe));
         }
         registration.addRecipes(MachineCategories.FUEL, fuels);
         registration.addRecipes(MachineCategories.EXTRACTION, recipes.getAllRecipesFor(ModRecipes.WOOL_EXTRACTION.get()).stream()
