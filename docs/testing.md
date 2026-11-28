@@ -2,6 +2,10 @@
 
 These are manual test scenarios, not a record of completed tests. Use disposable worlds and back up existing saves before testing datapack changes.
 
+## Automated validation
+
+GameTests are registered in `WoolWorksGameTests` through `Registries.TEST_FUNCTION` and `RegisterGameTestsEvent`, using function-based test instances. The default 26.1.2 suite completed 62/62 tests successfully during port development. The two optional fixture runs must still be verified on the target version.
+
 ## Standalone
 
 - Run Wool Works without other mods; check existing vanilla resources, feed recipes, sheep transformation, shearing, generator and extractor operation, and item automation.
@@ -14,6 +18,7 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 
 ## Machines and upgrades
 
+- Break each machine with a pickaxe in survival and verify the machine and stored inventory drop exactly once.
 - Insert valid and invalid Infused Wool into a generator; check FE output, light, progress, full-buffer pauses, item automation and any migrated remainder.
 - Extract iron wool with a hopper or pipe on each side. Check progress, energy use, idle and paused states, output blocking and persistence after reload.
 - Install up to eight Speed or two Overdrive Upgrades; check speed, output and FE usage, mixing rejection, manual-only upgrade slots and progress reset after changing upgrades. JEI should show base recipe values.
@@ -27,6 +32,7 @@ These are manual test scenarios, not a record of completed tests. Use disposable
 
 ## Modded resources
 
+- With AE2 installed, verify Certus Quartz and Fluix feed crafting and extraction; repeat without AE2 to verify unavailable resources cannot be used.
 - Install compatible material-providing mods and check their supported materials and tags; no particular external mod is required.
 - Toggle each resource category and verify individually disabled resources stay disabled after re-enabling it. Check automatic-resource settings independently, and check sheep conversion after a category is disabled and the world restarted.
 - Exercise search together with All Resources, Enabled Only and Disabled Only; check reasons, alphabetical order, toggles, Done and Cancel, and that missing optional materials remain hidden. Check the three corrected colors on feed, wool and sheep.
