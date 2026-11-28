@@ -27,7 +27,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 public final class WorkerVisualization {
     private static final RenderPipeline PIPELINE = RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
             .withLocation("woolworks:pipeline/worker_area")
-            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS, false))
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .build();
     private static final RenderType OUTLINE = RenderType.create("woolworks_worker_area",
             RenderSetup.builder(PIPELINE).createRenderSetup());
