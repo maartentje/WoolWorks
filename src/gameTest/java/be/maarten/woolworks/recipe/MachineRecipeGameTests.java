@@ -314,8 +314,16 @@ public final class MachineRecipeGameTests {
                     if (ResourceTypes.enabled(level, id) != present) { helper.fail("Wrong availability: " + id); return; }
                     var feed = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:" + name + "_feed")));
                     var extraction = level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/" + name)));
-                    if (feed.isPresent() != present || extraction.isPresent() != present) { helper.fail("Wrong conditional recipes: " + id); return; }
-                    if (!present) continue;
+                    boolean deferred = name.equals("certus_quartz") || name.equals("fluix");
+                    if (feed.isPresent() != (present || deferred) || extraction.isPresent() != (present || deferred)) { helper.fail("Wrong conditional recipes: " + id); return; }
+                    if (!present) {
+                        if (deferred) {
+                            var unavailable = (WoolExtractionRecipe) extraction.orElseThrow().value();
+                            var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
+                            if (unavailable.matches(new SingleRecipeInput(wool), level)) { helper.fail("Unavailable extraction matched: " + id); return; }
+                        }
+                        continue;
+                    }
                     var crafting = (net.minecraft.world.item.crafting.CraftingRecipe) feed.orElseThrow().value();
                     var processing = (WoolExtractionRecipe) extraction.orElseThrow().value();
                     var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
@@ -367,7 +375,7 @@ public final class MachineRecipeGameTests {
                 if (ResourceTypes.enabled(level, id) || feed.matches(input, level) || extraction.matches(new SingleRecipeInput(wool), level)) { helper.fail("Vanilla disabling failed: " + id); return; }
                 disabled.set(List.of());
             }
-            if (registry.get(Identifier.parse("woolworks:netherite")) != null || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:netherite_feed"))).isPresent()
+            if (registry.get(Identifier.parse("woolworks:netherite")).isPresent() || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:netherite_feed"))).isPresent()
                     || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/netherite"))).isPresent()) { helper.fail("Old Netherite resource remains"); return; }
             var custom = Identifier.parse("woolworks_test:tagged_custom");
             if (fixture && !ResourceTypes.enabled(level, custom)) { helper.fail("Custom tagged resource disabled by global switch"); return; }
@@ -391,7 +399,7 @@ public final class MachineRecipeGameTests {
             var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:ingots/osmium"));
             boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(tag).map(t -> t.iterator().hasNext()).orElse(false);
             if (!ResourceTypes.enabled(level, iron) || ResourceTypes.enabled(level, osmium) != present) { helper.fail("Initial availability wrong"); return; }
-            if (registry.get(Identifier.parse("woolworks:charged_certus_quartz")) != null || registry.get(Identifier.parse("woolworks:certus_quartz")) == null
+            if (registry.get(Identifier.parse("woolworks:charged_certus_quartz")).isPresent() || registry.get(Identifier.parse("woolworks:certus_quartz")).isEmpty()
                     || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:charged_certus_quartz_feed"))).isPresent()
                     || level.recipeAccess().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, Identifier.parse("woolworks:extraction/charged_certus_quartz"))).isPresent()) { helper.fail("Certus catalogue incorrect"); return; }
             var json = com.google.gson.JsonParser.parseString("{\"translation_key\":\"test.custom\",\"color\":1,\"min_yield\":1,\"max_yield\":1}");
@@ -1726,7 +1734,9 @@ public final class MachineRecipeGameTests {
         }
         var east = new BlockHitResult(new Vec3(pos.getX() + 0.9, pos.getY() + 0.5, pos.getZ() + 0.5), Direction.EAST, pos, false);
         player.gameMode.useItemOn(player, level, shears, InteractionHand.MAIN_HAND, east);
-        if (cable.isExtracting(Direction.EAST)) { helper.fail("Receive-only machine enabled as source"); return; }
+        if (!cable.isExtracting(Direction.EAST)) { helper.fail("Manual extraction toggle failed on connected machine"); return; }
+        player.gameMode.useItemOn(player, level, shears, InteractionHand.MAIN_HAND, east);
+        if (cable.isExtracting(Direction.EAST)) { helper.fail("Manual extraction toggle did not clear"); return; }
         player.gameMode.useItemOn(player, level, shears, InteractionHand.MAIN_HAND, west);
         if (cable.isExtracting(Direction.WEST)) { helper.fail("Shears did not disable extraction"); return; }
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
