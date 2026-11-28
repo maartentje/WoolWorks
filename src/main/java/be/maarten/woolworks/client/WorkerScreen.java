@@ -23,7 +23,7 @@ public class WorkerScreen extends AbstractContainerScreen<WorkerMenu> {
         area = addRenderableWidget(Button.builder(Component.empty(), button -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0))
                 .bounds(leftPos + 137, topPos + 4, 32, 18).build());
     }
-    @Override protected void extractBackground(GuiGraphicsExtractor graphics, float partial, int mouseX, int mouseY) {
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int x = leftPos, y = topPos;
         graphics.fill(x, y, x + imageWidth, y + imageHeight, 0xff373737);
         graphics.fill(x + 1, y + 1, x + imageWidth - 1, y + imageHeight - 1, 0xffc6c6c6);
