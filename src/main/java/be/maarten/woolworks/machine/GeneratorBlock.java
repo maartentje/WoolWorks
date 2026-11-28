@@ -59,16 +59,4 @@ public class GeneratorBlock extends BaseEntityBlock {
         return level.isClientSide() ? null : createTickerHelper(type, ModMachines.GENERATOR_ENTITY.get(), GeneratorBlockEntity::tick);
     }
 
-    @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState nextState, boolean moving) {
-        if (!state.is(nextState.getBlock()) && level.getBlockEntity(pos) instanceof GeneratorBlockEntity generator) {
-            if (level instanceof ServerLevel) {
-                for (int slot = 0; slot < generator.fuel().getSlots(); slot++) {
-                    var stack = generator.fuel().getStackInSlot(slot);
-                    if (!stack.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copy());
-                }
-                if (!generator.migratedRemainder().isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), generator.migratedRemainder().copy());
-            }
-        }
-        super.onRemove(state, level, pos, nextState, moving);
-    }
 }
