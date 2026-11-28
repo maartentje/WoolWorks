@@ -43,7 +43,7 @@ public final class ModMachines {
         event.registerBlockEntity(Capabilities.Item.BLOCK, EXTRACTOR_ENTITY.get(), (entity, side) -> entity.automation());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, WORKER_ENTITY.get(), (entity, side) -> entity.energy());
         event.registerBlockEntity(Capabilities.Item.BLOCK, WORKER_ENTITY.get(), (entity, side) -> entity.automation());
-        event.registerBlock(Capabilities.EnergyStorage.BLOCK, (level, pos, state, entity, side) -> CableNetworks.port(level, pos, side), CABLE.get());
+        event.registerBlock(Capabilities.Energy.BLOCK, (level, pos, state, entity, side) -> CableNetworks.port(level, pos, side), CABLE.get());
     }
     private ModMachines() {}
 }

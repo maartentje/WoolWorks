@@ -4,6 +4,10 @@ All notable changes to Wool Works will be documented in this file.
 
 ## [Unreleased]
 
+### Compatibility
+
+- In the in-progress 26.1.2 port, cables automatically extract from Wool Generators; unknown external energy handlers default to passive connections and can be configured with shears. Runtime compatibility remains unverified.
+
 ### Modpack customization
 
 - For the in-progress 26.1.2 port, migrate built-in recipe ingredients to target item/tag strings and the `neoforge:ingredient_type` discriminator. Custom datapack and KubeJS recipe overrides using 1.21.1 ingredient syntax must be updated; target runtime compatibility is not yet verified.

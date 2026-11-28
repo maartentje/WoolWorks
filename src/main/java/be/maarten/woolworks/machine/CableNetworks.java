@@ -15,7 +15,11 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.TransferPreconditions;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
@@ -38,7 +42,7 @@ public final class CableNetworks {
 
     @SubscribeEvent public static void tick(LevelTickEvent.Post event) {
         Level level = event.getLevel();
-        if (level.isClientSide) return;
+        if (level.isClientSide()) return;
         NetworkState state = STATES.get(level);
         if (state == null || state.active.isEmpty()) return;
         for (BlockPos pos : List.copyOf(state.active)) {
@@ -49,25 +53,21 @@ public final class CableNetworks {
     }
 
     @SubscribeEvent public static void chunkLoad(ChunkEvent.Load event) {
-        if (event.getLevel() instanceof Level level && !level.isClientSide) invalidate(level);
+        if (event.getLevel() instanceof Level level && !level.isClientSide()) invalidate(level);
     }
     @SubscribeEvent public static void chunkUnload(ChunkEvent.Unload event) {
-        if (event.getLevel() instanceof Level level && !level.isClientSide) invalidate(level);
+        if (event.getLevel() instanceof Level level && !level.isClientSide()) invalidate(level);
     }
 
-    public static IEnergyStorage port(Level level, BlockPos pos, Direction side) {
-        return new IEnergyStorage() {
-            @Override public int receiveEnergy(int maxReceive, boolean simulate) {
-                if (level.isClientSide || maxReceive <= 0 || ROUTING.get() || !level.hasChunkAt(pos)
-                        || !isEnabledSource(level, pos, side)) return 0;
-                return deliverExtracted(level, pos, side, maxReceive, simulate);
-            }
-            @Override public int extractEnergy(int maxExtract, boolean simulate) { return 0; }
-            @Override public int getEnergyStored() { return 0; }
-            @Override public int getMaxEnergyStored() { return 0; }
-            @Override public boolean canExtract() { return false; }
-            @Override public boolean canReceive() {
-                return isEnabledSource(level, pos, side);
+    public static EnergyHandler port(Level level, BlockPos pos, Direction side) {
+        return new EnergyHandler() {
+            @Override public long getAmountAsLong() { return 0; }
+            @Override public long getCapacityAsLong() { return isEnabledSource(level, pos, side) ? MachineConfig.CABLE_TRANSFER_RATE.get() : 0; }
+            @Override public int extract(int amount, TransactionContext tx) { TransferPreconditions.checkNonNegative(amount); return 0; }
+            @Override public int insert(int amount, TransactionContext tx) {
+                TransferPreconditions.checkNonNegative(amount);
+                if (!isEnabledSource(level, pos, side)) return 0;
+                return deliverExtracted(level, pos, side, amount, tx);
             }
         };
     }
@@ -76,17 +76,20 @@ public final class CableNetworks {
         if (side == null || !level.hasChunkAt(pos) || !level.getBlockState(pos).is(ModMachines.CABLE.get())
                 || !(level.getBlockEntity(pos) instanceof CableBlockEntity cable) || !cable.isExtracting(side)) return false;
         BlockPos neighbor = pos.relative(side);
-        if (!level.hasChunkAt(neighbor) || level.getBlockState(neighbor).is(ModMachines.CABLE.get())) return false;
-        var source = level.getCapability(Capabilities.EnergyStorage.BLOCK, neighbor, side.getOpposite());
-        return source != null && source.canExtract();
+        return level.hasChunkAt(neighbor) && !level.getBlockState(neighbor).is(ModMachines.CABLE.get())
+                && level.getCapability(Capabilities.Energy.BLOCK, neighbor, side.getOpposite()) != null;
     }
 
-    static int deliverExtracted(Level level, BlockPos pos, Direction side, int amount, boolean simulate) {
-        if (level.isClientSide || amount <= 0 || ROUTING.get() || !level.hasChunkAt(pos)
+    static int deliverExtracted(Level level, BlockPos pos, Direction side, int amount, TransactionContext parent) {
+        TransferPreconditions.checkNonNegative(amount);
+        if (level.isClientSide() || amount == 0 || ROUTING.get() || !level.hasChunkAt(pos)
                 || !level.getBlockState(pos).is(ModMachines.CABLE.get())) return 0;
         ROUTING.set(true);
-        try { return transfer(level, pos, side, amount, simulate); }
-        finally { ROUTING.remove(); }
+        try (var tx = Transaction.open(parent)) {
+            int transferred = transfer(level, pos, side, amount, tx);
+            if (transferred > 0) tx.commit();
+            return transferred;
+        } finally { ROUTING.remove(); }
     }
 
     record Route(BlockPos cable, List<BlockPos> path) {}
@@ -97,6 +100,11 @@ public final class CableNetworks {
         long tick = Long.MIN_VALUE;
         long topologyVersion;
         int rotation;
+        record Budget(long tick, Map<BlockPos, Integer> used, int rotation) {}
+        final SnapshotJournal<Budget> journal = new SnapshotJournal<>() {
+            @Override protected Budget createSnapshot() { return new Budget(tick, new HashMap<>(used), rotation); }
+            @Override protected void revertToSnapshot(Budget b) { tick = b.tick(); used.clear(); used.putAll(b.used()); rotation = b.rotation(); }
+        };
 
         void invalidateRoutes() {
             topologyVersion++;
@@ -157,9 +165,9 @@ public final class CableNetworks {
         return result;
     }
 
-    private static int transfer(Level level, BlockPos root, Direction side, int requested, boolean simulate) {
+    private static int transfer(Level level, BlockPos root, Direction side, int requested, TransactionContext tx) {
         NetworkState state = STATES.computeIfAbsent(level, ignored -> new NetworkState());
-        if (state.tick != level.getGameTime()) { state.tick = level.getGameTime(); state.used.clear(); }
+        if (state.tick != level.getGameTime()) { state.journal.updateSnapshots(tx); state.tick = level.getGameTime(); state.used.clear(); }
         List<Route> routes = cachedRoutes(state, root, () -> routes(level, root));
         if (routes == null) return 0;
         long version = state.topologyVersion;
@@ -170,11 +178,11 @@ public final class CableNetworks {
             }
         }
         if (version != state.topologyVersion) return 0;
-        Map<BlockPos, Integer> usage = simulate ? new HashMap<>(state.used) : state.used;
+        Map<BlockPos, Integer> usage = state.used;
         int limit = MachineConfig.CABLE_TRANSFER_RATE.get();
         BlockPos source = side == null ? null : root.relative(side);
-        IEnergyStorage sourceStorage = source != null && level.hasChunkAt(source)
-                ? level.getCapability(Capabilities.EnergyStorage.BLOCK, source, side.getOpposite()) : null;
+        EnergyHandler sourceStorage = source != null && level.hasChunkAt(source)
+                ? level.getCapability(Capabilities.Energy.BLOCK, source, side.getOpposite()) : null;
         int total = 0;
         List<Route> topology = routes;
         for (int pass = 0; pass <= topology.size() && total < requested; pass++) {
@@ -190,20 +198,23 @@ public final class CableNetworks {
                 BlockPos targetPos = route.cable().relative(direction);
                 if (targetPos.equals(source) || !level.hasChunkAt(targetPos) || level.getBlockState(targetPos).is(ModMachines.CABLE.get())) continue;
                 if (level.getBlockEntity(route.cable()) instanceof CableBlockEntity cable && cable.isExtracting(direction)) continue;
-                var target = level.getCapability(Capabilities.EnergyStorage.BLOCK, targetPos, direction.getOpposite());
-                if (target == null || target == sourceStorage || !target.canReceive()) continue;
+                var target = level.getCapability(Capabilities.Energy.BLOCK, targetPos, direction.getOpposite());
+                if (target == null || target == sourceStorage) continue;
                 int allowed = requested - total;
                 for (BlockPos segment : route.path()) allowed = Math.min(allowed, limit - usage.getOrDefault(segment, 0));
                 if (allowed <= 0) continue;
-                int received = Math.clamp(target.receiveEnergy(allowed, simulate), 0, allowed);
+                int received = target.insert(allowed, tx);
+                if (received < 0 || received > allowed) throw new IllegalStateException("Invalid energy insertion result " + received);
                 if (received == 0) continue;
+                state.journal.updateSnapshots(tx);
                 for (BlockPos segment : route.path()) usage.merge(segment, received, Integer::sum);
                 total += received;
             }
             }
             if (total == before) break;
         }
-        if (!simulate && total > 0) state.rotation++;
+        if (version != state.topologyVersion) return 0;
+        if (total > 0) { state.journal.updateSnapshots(tx); state.rotation++; }
         return total;
     }
 }
