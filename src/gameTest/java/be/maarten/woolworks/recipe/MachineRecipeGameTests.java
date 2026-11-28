@@ -15,9 +15,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
@@ -27,16 +26,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-@GameTestHolder(WoolWorks.MODID)
-@PrefixGameTestTemplate(false)
 @SuppressWarnings("removal")
 public final class MachineRecipeGameTests {
     private MachineRecipeGameTests() {}
 
-    @GameTest(template = "empty")
     public static void cableArmModelDirections(GameTestHelper helper) throws java.io.IOException {
         var loader = WoolWorks.class.getClassLoader();
         try (var blockstate = loader.getResourceAsStream("assets/woolworks/blockstates/wool_insulated_cable.json");
@@ -76,7 +70,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void cableConnectionsAllDirections(GameTestHelper helper) {
         var level = helper.getLevel();
         var pos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -116,7 +109,6 @@ public final class MachineRecipeGameTests {
         };
     }
 
-    @GameTest(template = "empty")
     public static void extractorIdleToProcessing(GameTestHelper helper) {
         var level = helper.getLevel();
         var pos = helper.absolutePos(BlockPos.ZERO);
@@ -128,7 +120,7 @@ public final class MachineRecipeGameTests {
                 || extractor.menuData().get(6) != 0 || level.getBlockState(pos).getValue(be.maarten.woolworks.machine.ExtractorBlock.ACTIVE)) {
             helper.fail("Empty extractor did not remain idle"); return;
         }
-        var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.parse("woolworks:iron"));
+        var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.parse("woolworks:iron"));
         extractor.inventory().setStackInSlot(0, wool.copy());
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
         if (!extractor.isProcessing() || extractor.energy().getEnergyStored() != 9960 || extractor.remainingTicks() != 199
@@ -150,14 +142,13 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", batch = "resource_missing_tag")
     public static void unavailableTagSheepConversion(GameTestHelper helper) {
         var level = helper.getLevel();
-        var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:ingots/osmium"));
+        var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:ingots/osmium"));
         if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false)) { helper.succeed(); return; }
         var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
         var old = automatic.get(); automatic.set(true);
-        var id = ResourceLocation.parse("woolworks:osmium");
+        var id = Identifier.parse("woolworks:osmium");
         var feed = ModItems.withResource(ModItems.RESOURCE_FEED.get(), id);
         var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
         var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
@@ -172,7 +163,6 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "resource_conversion")
     public static void invalidSheepConversion(GameTestHelper helper) {
         var level = helper.getLevel();
         var disabled = be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES;
@@ -185,12 +175,12 @@ public final class MachineRecipeGameTests {
         var optional = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
         var valid = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
         var ordinary = net.minecraft.world.entity.EntityType.SHEEP.create(level);
-        iron.setResourceId(ResourceLocation.parse("woolworks:iron")); iron.setAge(-12000); iron.setSheared(true);
+        iron.setResourceId(Identifier.parse("woolworks:iron")); iron.setAge(-12000); iron.setSheared(true);
         iron.setCustomName(Component.literal("Conversion test")); iron.setCustomNameVisible(true); iron.setNoAi(true); iron.setPersistenceRequired();
         iron.setHealth(4); iron.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 1000));
-        missing.setResourceId(ResourceLocation.parse("test:missing"));
-        optional.setResourceId(ResourceLocation.parse("woolworks:osmium"));
-        valid.setResourceId(ResourceLocation.parse(Boolean.getBoolean("woolworks.test.osmium") ? "woolworks_test:tagged_custom" : "woolworks:coal"));
+        missing.setResourceId(Identifier.parse("test:missing"));
+        optional.setResourceId(Identifier.parse("woolworks:osmium"));
+        valid.setResourceId(Identifier.parse(Boolean.getBoolean("woolworks.test.osmium") ? "woolworks_test:tagged_custom" : "woolworks:coal"));
         for (var animal : List.of(iron, missing, optional, valid, ordinary)) {
             animal.moveTo(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5); animal.setNoAi(true); animal.setNoGravity(true); level.addFreshEntity(animal);
         }
@@ -221,7 +211,6 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty")
     public static void extractionDisplayOutput(GameTestHelper helper) {
         var result = new ItemStack(Items.IRON_INGOT, 2);
         result.set(DataComponents.CUSTOM_NAME, Component.literal("Custom output"));
@@ -236,7 +225,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void automaticCatalogue(GameTestHelper helper) {
         var level = helper.getLevel();
         var registry = level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY);
@@ -245,11 +233,11 @@ public final class MachineRecipeGameTests {
         var oldAutomatic = automatic.get(); var oldDisabled = disabled.get();
         boolean fixture = Boolean.getBoolean("woolworks.test.osmium");
         if (Boolean.getBoolean("woolworks.test.empty_tag")) {
-            var key = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:dusts/salt"));
-            var salt = ResourceLocation.parse("woolworks:salt");
+            var key = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:dusts/salt"));
+            var salt = Identifier.parse("woolworks:salt");
             if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(key).map(t -> t.iterator().hasNext()).orElse(false)
-                    || ResourceTypes.enabled(level, salt) || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:salt_feed")).isPresent()
-                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/salt")).isPresent()) {
+                    || ResourceTypes.enabled(level, salt) || level.getRecipeManager().byKey(Identifier.parse("woolworks:salt_feed")).isPresent()
+                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/salt")).isPresent()) {
                 helper.fail("Empty salt tag enabled a resource or recipe"); return;
             }
         }
@@ -311,11 +299,11 @@ public final class MachineRecipeGameTests {
         String[] standalone = "silicon".split(" ");
         try {
             automatic.set(true); disabled.set(List.of());
-            var seen = new java.util.HashSet<ResourceLocation>();
+            var seen = new java.util.HashSet<Identifier>();
             for (var group : List.of(java.util.Map.entry("ingots", metals), java.util.Map.entry("gems", gems), java.util.Map.entry("dusts", dusts), java.util.Map.entry("materials", materials), java.util.Map.entry("standalone", standalone), java.util.Map.entry("additional", additional))) {
                 for (String name : group.getValue()) {
-                    var id = ResourceLocation.parse("woolworks:" + name);
-                    var tagId = ResourceLocation.parse(group.getKey().equals("additional") ? additionalTags.get(name) : group.getKey().equals("standalone") ? "c:" + name : (group.getKey().equals("materials") ? "woolworks:" : "c:") + group.getKey() + "/" + (name.equals("soulium_ingot") ? "soulium" : name.equals("fiery_ingot") ? "fiery" : name));
+                    var id = Identifier.parse("woolworks:" + name);
+                    var tagId = Identifier.parse(group.getKey().equals("additional") ? additionalTags.get(name) : group.getKey().equals("standalone") ? "c:" + name : (group.getKey().equals("materials") ? "woolworks:" : "c:") + group.getKey() + "/" + (name.equals("soulium_ingot") ? "soulium" : name.equals("fiery_ingot") ? "fiery" : name));
                     var type = registry.get(id);
                     if (!seen.add(id) || type == null || !type.automatic() || !type.requiredItemTag().equals(java.util.Optional.of(tagId))
                             || type.color() < 0 || type.color() > 0xffffff || !net.minecraft.locale.Language.getInstance().has(type.translationKey())) {
@@ -325,8 +313,8 @@ public final class MachineRecipeGameTests {
                     boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false);
                     if (fixture && !present) { helper.fail("Test tag missing: " + tagId); return; }
                     if (ResourceTypes.enabled(level, id) != present) { helper.fail("Wrong availability: " + id); return; }
-                    var feed = level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:" + name + "_feed"));
-                    var extraction = level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/" + name));
+                    var feed = level.getRecipeManager().byKey(Identifier.parse("woolworks:" + name + "_feed"));
+                    var extraction = level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/" + name));
                     if (feed.isPresent() != present || extraction.isPresent() != present) { helper.fail("Wrong conditional recipes: " + id); return; }
                     if (!present) continue;
                     var crafting = (net.minecraft.world.item.crafting.CraftingRecipe) feed.orElseThrow().value();
@@ -350,26 +338,26 @@ public final class MachineRecipeGameTests {
                 }
             }
             if (seen.size() != 128) { helper.fail("Unexpected optional catalogue size: " + seen.size()); return; }
-            var amethyst = ResourceLocation.parse("woolworks:amethyst");
+            var amethyst = Identifier.parse("woolworks:amethyst");
             var amethystInput = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.AMETHYST_SHARD)));
             var amethystWool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), amethyst);
-            var amethystFeed = (net.minecraft.world.item.crafting.CraftingRecipe) level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:amethyst_feed")).orElseThrow().value();
-            var amethystExtraction = (WoolExtractionRecipe) level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/amethyst")).orElseThrow().value();
+            var amethystFeed = (net.minecraft.world.item.crafting.CraftingRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:amethyst_feed")).orElseThrow().value();
+            var amethystExtraction = (WoolExtractionRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/amethyst")).orElseThrow().value();
             automatic.set(false);
-            if (!ResourceTypes.enabled(level, amethyst) || !ResourceTypes.enabled(level, ResourceLocation.parse("woolworks:iron")) || !amethystFeed.matches(amethystInput, level)
+            if (!ResourceTypes.enabled(level, amethyst) || !ResourceTypes.enabled(level, Identifier.parse("woolworks:iron")) || !amethystFeed.matches(amethystInput, level)
                     || !amethyst.equals(amethystFeed.assemble(amethystInput, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
                     || !amethystExtraction.matches(new SingleRecipeInput(amethystWool), level) || !amethystExtraction.assemble(new SingleRecipeInput(amethystWool), level.registryAccess()).is(Items.AMETHYST_SHARD)) {
                 helper.fail("Amethyst or vanilla unavailable with automatic resources off"); return;
             }
             for (String name : "netherite_scrap echo_shard prismarine_shard prismarine_crystals glowstone_dust flint clay_ball ender_pearl blaze_rod breeze_rod slimeball magma_cream ghast_tear phantom_membrane bone string gunpowder spider_eye leather feather rotten_flesh shulker_shell rabbit_hide rabbits_foot ink_sac glow_ink_sac turtle_scute armadillo_scute".split(" ")) {
-                var id = ResourceLocation.parse("woolworks:" + name);
+                var id = Identifier.parse("woolworks:" + name);
                 var itemName = name.equals("slimeball") ? "slime_ball" : name.equals("rabbits_foot") ? "rabbit_foot" : name;
-                var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ResourceLocation.parse("minecraft:" + itemName));
+                var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(Identifier.parse("minecraft:" + itemName));
                 var type = registry.get(id);
                 var input = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(item)));
                 var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
-                var feed = (net.minecraft.world.item.crafting.CraftingRecipe) level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:" + name + "_feed")).orElseThrow().value();
-                var extraction = (WoolExtractionRecipe) level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/" + name)).orElseThrow().value();
+                var feed = (net.minecraft.world.item.crafting.CraftingRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:" + name + "_feed")).orElseThrow().value();
+                var extraction = (WoolExtractionRecipe) level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/" + name)).orElseThrow().value();
                 if (item == Items.AIR || type == null || type.automatic() || !net.minecraft.locale.Language.getInstance().has(type.translationKey())
                         || !ResourceTypes.enabled(level, id) || !feed.matches(input, level)
                         || !id.equals(feed.assemble(input, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))
@@ -380,9 +368,9 @@ public final class MachineRecipeGameTests {
                 if (ResourceTypes.enabled(level, id) || feed.matches(input, level) || extraction.matches(new SingleRecipeInput(wool), level)) { helper.fail("Vanilla disabling failed: " + id); return; }
                 disabled.set(List.of());
             }
-            if (registry.get(ResourceLocation.parse("woolworks:netherite")) != null || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:netherite_feed")).isPresent()
-                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/netherite")).isPresent()) { helper.fail("Old Netherite resource remains"); return; }
-            var custom = ResourceLocation.parse("woolworks_test:tagged_custom");
+            if (registry.get(Identifier.parse("woolworks:netherite")) != null || level.getRecipeManager().byKey(Identifier.parse("woolworks:netherite_feed")).isPresent()
+                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/netherite")).isPresent()) { helper.fail("Old Netherite resource remains"); return; }
+            var custom = Identifier.parse("woolworks_test:tagged_custom");
             if (fixture && !ResourceTypes.enabled(level, custom)) { helper.fail("Custom tagged resource disabled by global switch"); return; }
             disabled.set(List.of(amethyst.toString(), custom.toString()));
             if (ResourceTypes.enabled(level, amethyst) || amethystFeed.matches(amethystInput, level) || amethystExtraction.matches(new SingleRecipeInput(amethystWool), level)
@@ -391,7 +379,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", batch = "category_restrictions")
     public static void categoryRestrictions(GameTestHelper helper) {
         var level = helper.getLevel();
         var registry = level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY);
@@ -399,15 +386,15 @@ public final class MachineRecipeGameTests {
         var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
         var disabled = be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES;
         var oldMetals = metals.get(); var oldAuto = automatic.get(); var oldDisabled = disabled.get();
-        var iron = ResourceLocation.parse("woolworks:iron"); var osmium = ResourceLocation.parse("woolworks:osmium");
+        var iron = Identifier.parse("woolworks:iron"); var osmium = Identifier.parse("woolworks:osmium");
         try {
             metals.set(true); automatic.set(true); disabled.set(List.of());
-            var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:ingots/osmium"));
+            var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:ingots/osmium"));
             boolean present = net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false);
             if (!ResourceTypes.enabled(level, iron) || ResourceTypes.enabled(level, osmium) != present) { helper.fail("Initial availability wrong"); return; }
-            if (registry.get(ResourceLocation.parse("woolworks:charged_certus_quartz")) != null || registry.get(ResourceLocation.parse("woolworks:certus_quartz")) == null
-                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:charged_certus_quartz_feed")).isPresent()
-                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/charged_certus_quartz")).isPresent()) { helper.fail("Certus catalogue incorrect"); return; }
+            if (registry.get(Identifier.parse("woolworks:charged_certus_quartz")) != null || registry.get(Identifier.parse("woolworks:certus_quartz")) == null
+                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:charged_certus_quartz_feed")).isPresent()
+                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/charged_certus_quartz")).isPresent()) { helper.fail("Certus catalogue incorrect"); return; }
             var json = com.google.gson.JsonParser.parseString("{\"translation_key\":\"test.custom\",\"color\":1,\"min_yield\":1,\"max_yield\":1}");
             var custom = be.maarten.woolworks.resource.ResourceType.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow();
             if (custom.category() != be.maarten.woolworks.resource.ResourceCategory.MATERIALS) { helper.fail("Default category incorrect"); return; }
@@ -421,13 +408,12 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", batch = "category_conversion")
     public static void categorySheepConversion(GameTestHelper helper) {
         var metals = be.maarten.woolworks.machine.MachineConfig.ENABLE_METALS;
         var old = metals.get(); metals.set(false);
         var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(helper.getLevel());
         var pos = helper.absolutePos(BlockPos.ZERO);
-        sheep.setResourceId(ResourceLocation.parse("woolworks:iron")); sheep.moveTo(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5); sheep.setNoAi(true);
+        sheep.setResourceId(Identifier.parse("woolworks:iron")); sheep.moveTo(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5); sheep.setNoAi(true);
         helper.getLevel().addFreshEntity(sheep);
         helper.runAfterDelay(3, () -> {
             try {
@@ -437,11 +423,10 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty")
     public static void osmiumAvailability(GameTestHelper helper) {
         var level = helper.getLevel();
-        var id = ResourceLocation.parse("woolworks:osmium");
-        var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:ingots/osmium"));
+        var id = Identifier.parse("woolworks:osmium");
+        var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Identifier.parse("c:ingots/osmium"));
         boolean tagged = net.minecraft.core.registries.BuiltInRegistries.ITEM.getTag(tag).map(t -> t.iterator().hasNext()).orElse(false);
         if (Boolean.getBoolean("woolworks.test.osmium") && !tagged) { helper.fail("Osmium test tag did not load"); return; }
         var automatic = be.maarten.woolworks.machine.MachineConfig.ENABLE_AUTOMATIC_MODDED_RESOURCES;
@@ -450,11 +435,11 @@ public final class MachineRecipeGameTests {
         try {
             automatic.set(true); disabled.set(List.of());
             if (ResourceTypes.enabled(level, id) != tagged) { helper.fail("Osmium availability disagrees with its tag"); return; }
-            if (!tagged && (level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:osmium_feed")).isPresent()
-                    || level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:extraction/osmium")).isPresent())) { helper.fail("Osmium recipes loaded without a non-empty tag"); return; }
+            if (!tagged && (level.getRecipeManager().byKey(Identifier.parse("woolworks:osmium_feed")).isPresent()
+                    || level.getRecipeManager().byKey(Identifier.parse("woolworks:extraction/osmium")).isPresent())) { helper.fail("Osmium recipes loaded without a non-empty tag"); return; }
             if (tagged) {
                 var input = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.IRON_INGOT)));
-                var recipe = level.getRecipeManager().byKey(ResourceLocation.parse("woolworks:osmium_feed")).orElseThrow().value();
+                var recipe = level.getRecipeManager().byKey(Identifier.parse("woolworks:osmium_feed")).orElseThrow().value();
                 if (!(recipe instanceof net.minecraft.world.item.crafting.CraftingRecipe crafting) || !crafting.matches(input, level)
                         || !id.equals(crafting.assemble(input, level.registryAccess()).get(be.maarten.woolworks.registry.ModComponents.RESOURCE_TYPE))) {
                     helper.fail("Osmium feed recipe failed"); return;
@@ -494,18 +479,17 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void disabledResourceRestrictions(GameTestHelper helper) {
         var level = helper.getLevel();
         var config = be.maarten.woolworks.machine.MachineConfig.DISABLED_RESOURCES;
         var old = config.get();
-        var id = ResourceLocation.fromNamespaceAndPath("woolworks", "iron");
+        var id = Identifier.fromNamespaceAndPath("woolworks", "iron");
         var input = CraftingInput.of(2, 1, List.of(new ItemStack(Items.WHEAT), new ItemStack(Items.IRON_INGOT)));
         var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), id);
         var feed = ModItems.withResource(ModItems.RESOURCE_FEED.get(), id);
         try {
             config.set(List.of());
-            var recipe = level.getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath("woolworks", "iron_feed")).orElseThrow().value();
+            var recipe = level.getRecipeManager().byKey(Identifier.fromNamespaceAndPath("woolworks", "iron_feed")).orElseThrow().value();
             if (!(recipe instanceof net.minecraft.world.item.crafting.CraftingRecipe crafting) || !crafting.matches(input, level)) { helper.fail("Iron feed is unavailable before disabling"); return; }
             config.set(List.of("woolworks:iron"));
             if (crafting.matches(input, level) || be.maarten.woolworks.machine.GeneratorFuels.find(level, wool).isPresent()
@@ -523,10 +507,9 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void advancementProgression(GameTestHelper helper) {
         var player = helper.makeMockServerPlayerInLevel();
-        var advancement = helper.getLevel().getServer().getAdvancements().get(ResourceLocation.fromNamespaceAndPath("woolworks", "root"));
+        var advancement = helper.getLevel().getServer().getAdvancements().get(Identifier.fromNamespaceAndPath("woolworks", "root"));
         if (advancement == null) { helper.fail("Root advancement not loaded"); return; }
         var progress = player.getAdvancements();
         progress.revoke(advancement, "infused_wool");
@@ -535,9 +518,9 @@ public final class MachineRecipeGameTests {
         trigger.trigger(player, inventory, new ItemStack(Items.STRING));
         if (progress.getOrStartProgress(advancement).isDone()) { helper.fail("Non-wool unlocked root"); return; }
         String[] ids = {"woolly_overdrive_upgrade", "woolly_speed_upgrade", "wool_insulated_cable", "wool_generator", "wool_extractor", "woolly_muffler", "wool_worker", "infused_wool", "resource_feed"};
-        ItemStack[] stacks = {new ItemStack(ModItems.OVERDRIVE_UPGRADE.get()), new ItemStack(ModItems.SPEED_UPGRADE.get()), new ItemStack(ModMachines.CABLE_ITEM.get()), new ItemStack(ModMachines.GENERATOR_ITEM.get()), new ItemStack(ModMachines.EXTRACTOR_ITEM.get()), new ItemStack(ModItems.MUFFLER.get()), new ItemStack(ModMachines.WORKER_ITEM.get()), ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("example", "custom")), ModItems.withResource(ModItems.RESOURCE_FEED.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"))};
+        ItemStack[] stacks = {new ItemStack(ModItems.OVERDRIVE_UPGRADE.get()), new ItemStack(ModItems.SPEED_UPGRADE.get()), new ItemStack(ModMachines.CABLE_ITEM.get()), new ItemStack(ModMachines.GENERATOR_ITEM.get()), new ItemStack(ModMachines.EXTRACTOR_ITEM.get()), new ItemStack(ModItems.MUFFLER.get()), new ItemStack(ModMachines.WORKER_ITEM.get()), ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("example", "custom")), ModItems.withResource(ModItems.RESOURCE_FEED.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"))};
         for (int i = 0; i < ids.length; i++) {
-            var entry = helper.getLevel().getServer().getAdvancements().get(ResourceLocation.fromNamespaceAndPath("woolworks", ids[i]));
+            var entry = helper.getLevel().getServer().getAdvancements().get(Identifier.fromNamespaceAndPath("woolworks", ids[i]));
             if (entry == null) { helper.fail("Missing advancement: " + ids[i]); return; }
             progress.revoke(entry, "item");
             trigger.trigger(player, inventory, stacks[i]);
@@ -545,10 +528,10 @@ public final class MachineRecipeGameTests {
         }
         for (var item : new net.minecraft.world.item.Item[]{ModItems.INFUSED_WOOL.get(), ModItems.RESOURCE_FEED.get()}) {
             String name = item == ModItems.INFUSED_WOOL.get() ? "infused_wool" : "resource_feed";
-            var entry = helper.getLevel().getServer().getAdvancements().get(ResourceLocation.fromNamespaceAndPath("woolworks", name));
+            var entry = helper.getLevel().getServer().getAdvancements().get(Identifier.fromNamespaceAndPath("woolworks", name));
             for (String resource : new String[]{"woolworks:coal", "woolworks:gold", "example:datapack_resource"}) {
                 progress.revoke(entry, "item");
-                trigger.trigger(player, inventory, ModItems.withResource(item, ResourceLocation.parse(resource)));
+                trigger.trigger(player, inventory, ModItems.withResource(item, Identifier.parse(resource)));
                 if (!progress.getOrStartProgress(entry).isDone()) { helper.fail("Resource variant did not unlock " + name + ": " + resource); return; }
             }
         }
@@ -558,7 +541,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void sheepGrassEatingEffects(GameTestHelper helper) throws Exception {
         var level = helper.getLevel();
         BlockPos workerPos = helper.absolutePos(BlockPos.ZERO);
@@ -631,7 +613,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void mufflerRecipe(GameTestHelper helper) {
         var level = helper.getLevel();
         var ids = level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).keySet().stream().filter(id -> ResourceTypes.enabled(level, id)).toList();
@@ -648,7 +629,7 @@ public final class MachineRecipeGameTests {
             }
         }
         for (ItemStack invalid : List.of(new ItemStack(Items.WHITE_WOOL), new ItemStack(ModItems.INFUSED_WOOL.get()),
-                ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("test", "invalid")))) {
+                ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("test", "invalid")))) {
             var input = CraftingInput.of(3, 3, List.of(invalid, ItemStack.EMPTY, ModItems.withResource(ModItems.INFUSED_WOOL.get(), ids.getFirst()),
                     new ItemStack(Items.IRON_INGOT), new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.IRON_INGOT),
                     new ItemStack(Items.STICK), ItemStack.EMPTY, new ItemStack(Items.STICK)));
@@ -658,7 +639,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void mufflerModesAndInteraction(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -699,7 +679,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void sheepSoundZones(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -722,7 +701,6 @@ public final class MachineRecipeGameTests {
         sheep.discard(); helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void sheepZonesTrackArea(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -751,7 +729,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void overlappingSheepZones(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -771,13 +748,12 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void machineSoundEvents(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
         level.setBlockAndUpdate(pos, ModMachines.GENERATOR.get().defaultBlockState());
         var generator = (GeneratorBlockEntity) level.getBlockEntity(pos);
-        var fuel = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"));
+        var fuel = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         fuel.setCount(2); generator.fuel().setStackInSlot(0, fuel);
         int[] heard = {0};
         java.util.function.Consumer<net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition> listener = event -> {
@@ -796,13 +772,12 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void extractorCompletionSound(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
         level.setBlockAndUpdate(pos, ModMachines.EXTRACTOR.get().defaultBlockState());
         var extractor = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
-        var input = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"));
+        var input = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         input.setCount(2); extractor.inventory().setStackInSlot(0, input);
         extractor.inventory().setStackInSlot(2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 2));
         extractor.energy().receiveEnergy(20000, false);
@@ -823,7 +798,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void workerAutomatedShearingSound(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -857,7 +831,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void overdriveRecipeAndSlot(GameTestHelper helper) {
         var level = helper.getLevel();
         var speed = new ItemStack(ModItems.SPEED_UPGRADE.get());
@@ -883,7 +856,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void overdriveShiftClick(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -903,7 +875,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void overdriveOversizedSavedStack(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -926,11 +897,10 @@ public final class MachineRecipeGameTests {
         drops.getFirst().discard(); helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void extractorUpgradeBalancing(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
-        var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"));
+        var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         for (int variant = 0; variant < 4; variant++) {
             level.setBlockAndUpdate(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
             level.setBlockAndUpdate(pos, ModMachines.EXTRACTOR.get().defaultBlockState());
@@ -955,13 +925,12 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void extractorOverdrivePausesAndResets(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
         level.setBlockAndUpdate(pos, ModMachines.EXTRACTOR.get().defaultBlockState());
         var extractor = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
-        extractor.inventory().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron")));
+        extractor.inventory().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         extractor.inventory().setStackInSlot(2, new ItemStack(ModItems.OVERDRIVE_UPGRADE.get(), 2));
         extractor.energy().receiveEnergy(159, false);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), extractor);
@@ -981,7 +950,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void overdriveDatapackRecipes(GameTestHelper helper) {
         if (!Boolean.getBoolean("woolworks.test.overdrive_recipes")) { helper.succeed(); return; }
         var level = helper.getLevel();
@@ -1008,7 +976,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void machineActiveStates(GameTestHelper helper) {
         var level = helper.getLevel();
         var generatorPos = helper.absolutePos(BlockPos.ZERO);
@@ -1022,7 +989,7 @@ public final class MachineRecipeGameTests {
         var generator = (GeneratorBlockEntity) level.getBlockEntity(generatorPos);
         var extractor = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(extractorPos);
         if (generator == null || extractor == null) { helper.fail("Machine block entities missing"); return; }
-        var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"));
+        var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         generator.fuel().setStackInSlot(0, iron.copy());
         extractor.inventory().setStackInSlot(0, iron.copy());
         extractor.energy().receiveEnergy(1000, false);
@@ -1059,7 +1026,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void generatorFuelProgress(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1084,7 +1050,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void cablePlacementDefaults(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1118,7 +1083,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void cableBlockItemPlacement(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1139,7 +1103,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void workerCrafting(GameTestHelper helper) {
         var level = helper.getLevel();
         for (var id : level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).keySet()) {
@@ -1155,7 +1118,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void speedUpgradeLimit(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1170,7 +1132,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void workerAreaAndAutomation(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1224,7 +1185,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void workerTimerPausesAndPersists(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1249,7 +1209,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void workerFullOutputRegrowth(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1284,7 +1243,6 @@ public final class MachineRecipeGameTests {
         sheep.discard(); helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void workerReservedYield(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1329,7 +1287,6 @@ public final class MachineRecipeGameTests {
         sheep.discard(); helper.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 240)
     public static void workerRegrowsAndShears(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1353,7 +1310,6 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 240)
     public static void workerShearsResourceSheep(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1362,7 +1318,7 @@ public final class MachineRecipeGameTests {
         var worker = (be.maarten.woolworks.machine.WorkerBlockEntity) level.getBlockEntity(pos);
         var sheep = be.maarten.woolworks.registry.ModEntities.RESOURCE_SHEEP.get().create(level);
         if (worker == null || sheep == null) { helper.fail("Worker or resource sheep missing"); return; }
-        var id = ResourceLocation.fromNamespaceAndPath("woolworks", "iron");
+        var id = Identifier.fromNamespaceAndPath("woolworks", "iron");
         sheep.setResourceId(id); sheep.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5 + facing.getStepZ());
         sheep.setNoAi(true); sheep.setNoGravity(true); sheep.setInvulnerable(true); sheep.setAge(0); level.addFreshEntity(sheep);
         worker.inventory().setStackInSlot(0, new ItemStack(Items.SHEARS));
@@ -1378,12 +1334,11 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty")
     public static void defaultRecipes(GameTestHelper helper) {
         var level = helper.getLevel();
         var manager = level.getRecipeManager();
-        ItemStack iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"));
-        ItemStack coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "coal"));
+        ItemStack iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
+        ItemStack coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "coal"));
         var extraction = manager.getRecipeFor(ModRecipes.WOOL_EXTRACTION.get(), new SingleRecipeInput(iron), level);
         if (extraction.isEmpty() || !extraction.get().value().result().is(Items.IRON_INGOT)) {
             helper.fail("Iron wool must match the iron extraction recipe");
@@ -1402,7 +1357,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void generatorCapabilities(GameTestHelper helper) {
         BlockPos relative = BlockPos.ZERO;
         helper.setBlock(relative, ModMachines.GENERATOR.get());
@@ -1419,7 +1373,7 @@ public final class MachineRecipeGameTests {
             helper.fail("Generator accepted invalid fuel");
             return;
         }
-        ItemStack coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "coal"));
+        ItemStack coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "coal"));
         if (!items.insertItem(0, coal, false).isEmpty()) {
             helper.fail("Generator rejected coal wool");
             return;
@@ -1433,7 +1387,6 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty")
     public static void generatorBurnAndMigration(GameTestHelper helper) {
         var level = helper.getLevel();
         var pos = helper.absolutePos(BlockPos.ZERO);
@@ -1447,13 +1400,13 @@ public final class MachineRecipeGameTests {
         if (generator.fuel().getSlots() != 1 || !generator.migratedRemainder().is(Items.BUCKET)) {
             helper.fail("Legacy output was not migrated"); return;
         }
-        generator.fuel().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron")));
+        generator.fuel().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         for (int i = 0; i < 400; i++) GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.energy().getEnergyStored() != 16000 || !generator.fuel().getStackInSlot(0).isEmpty()) {
             helper.fail("Generator burn did not produce exactly 16000 FE"); return;
         }
         generator.energy().deserializeNBT(level.registryAccess(), IntTag.valueOf(20000));
-        generator.fuel().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron")));
+        generator.fuel().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         GeneratorBlockEntity.tick(level, pos, level.getBlockState(pos), generator);
         if (generator.fuel().getStackInSlot(0).isEmpty()) { helper.fail("Full generator consumed fuel"); return; }
         var nearby = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
@@ -1463,12 +1416,11 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void furnaceFuelsAndRemainders(GameTestHelper helper) {
         var level = helper.getLevel();
         var lava = new ItemStack(Items.LAVA_BUCKET);
         var selected = GeneratorFuels.find(level, lava);
-        var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "coal"));
+        var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "coal"));
         var special = GeneratorFuels.find(level, wool);
         if (selected.isPresent() || special.isEmpty() || special.get().energyPerTick() != 40 || special.get().ticks() != 400) {
             helper.fail("Furnace fuel selection or custom-fuel priority failed"); return;
@@ -1479,7 +1431,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 260)
     public static void extractorProcessesIron(GameTestHelper helper) {
         helper.setBlock(BlockPos.ZERO, ModMachines.EXTRACTOR.get());
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1490,7 +1441,7 @@ public final class MachineRecipeGameTests {
             helper.fail("Extractor capabilities are missing or incorrectly directed");
             return;
         }
-        ItemStack iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"));
+        ItemStack iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         if (!items.insertItem(0, iron, false).isEmpty() || energy.receiveEnergy(8000, false) != 8000) {
             helper.fail("Extractor rejected valid input or energy");
             return;
@@ -1504,7 +1455,6 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 260)
     public static void adjacentGeneratorFeedsExtractor(GameTestHelper helper) {
         BlockPos generatorPos = helper.absolutePos(BlockPos.ZERO);
         BlockPos extractorPos = generatorPos.east();
@@ -1514,8 +1464,8 @@ public final class MachineRecipeGameTests {
         var fuel = level.getCapability(Capabilities.ItemHandler.BLOCK, generatorPos, Direction.UP);
         var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, extractorPos, Direction.UP);
         if (fuel == null || inventory == null) { helper.fail("Machine capabilities missing"); return; }
-        var coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "coal"));
-        var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron"));
+        var coal = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "coal"));
+        var iron = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron"));
         if (!fuel.insertItem(0, coal, false).isEmpty() || !inventory.insertItem(0, iron, false).isEmpty()) {
             helper.fail("Machine inputs were rejected");
             return;
@@ -1529,7 +1479,6 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 260)
     public static void cableTransfersAndLimits(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos start = helper.absolutePos(BlockPos.ZERO);
@@ -1562,10 +1511,9 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty")
     public static void cableRecipeUsesCopperWool(GameTestHelper helper) {
         var level = helper.getLevel();
-        var copper = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "copper"));
+        var copper = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "copper"));
         ItemStack shears = new ItemStack(Items.SHEARS);
         shears.setDamageValue(17);
         shears.set(DataComponents.CUSTOM_NAME, Component.literal("Test shears"));
@@ -1600,7 +1548,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void cableCycleAndBranch(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos root = helper.absolutePos(BlockPos.ZERO);
@@ -1622,7 +1569,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void sharedCableSegmentLimit(GameTestHelper helper) {
         var level = helper.getLevel();
         var root = helper.absolutePos(BlockPos.ZERO);
@@ -1640,13 +1586,12 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void extractorUpgradeEnergy(GameTestHelper helper) {
         var level = helper.getLevel();
         var pos = helper.absolutePos(BlockPos.ZERO);
         level.setBlockAndUpdate(pos, ModMachines.EXTRACTOR.get().defaultBlockState());
         var entity = (be.maarten.woolworks.machine.ExtractorBlockEntity) level.getBlockEntity(pos);
-        entity.inventory().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "iron")));
+        entity.inventory().setStackInSlot(0, ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "iron")));
         entity.inventory().setStackInSlot(2, new ItemStack(ModItems.SPEED_UPGRADE.get(), 8));
         entity.energy().receiveEnergy(1000, false);
         be.maarten.woolworks.machine.ExtractorBlockEntity.tick(level, pos, level.getBlockState(pos), entity);
@@ -1654,7 +1599,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void cableExtractionIsDirectional(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos cablePos = helper.absolutePos(BlockPos.ZERO);
@@ -1698,16 +1642,15 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void speedUpgradeRequiresValidResource(GameTestHelper helper) {
         var level = helper.getLevel();
         var sugar = new ItemStack(Items.SUGAR);
         var redstone = new ItemStack(Items.REDSTONE);
         if (Boolean.getBoolean("woolworks.test.custom_resource")
-                && !level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).containsKey(ResourceLocation.fromNamespaceAndPath("woolworks_test", "custom"))) {
+                && !level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).containsKey(Identifier.fromNamespaceAndPath("woolworks_test", "custom"))) {
             helper.fail("The custom test datapack resource did not load"); return;
         }
-        for (ResourceLocation name : level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).keySet()) {
+        for (Identifier name : level.registryAccess().registryOrThrow(ResourceTypes.REGISTRY).keySet()) {
             if (!ResourceTypes.enabled(level, name)) continue;
             var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), name);
             var fuel = GeneratorFuels.find(level, wool);
@@ -1720,7 +1663,7 @@ public final class MachineRecipeGameTests {
                 helper.fail("Speed upgrade rejected resource " + name); return;
             }
         }
-        var missing = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("test", "missing"));
+        var missing = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("test", "missing"));
         for (ItemStack invalid : List.of(new ItemStack(Items.WHITE_WOOL), new ItemStack(ModItems.INFUSED_WOOL.get()), missing)) {
             if (GeneratorFuels.find(level, invalid).isPresent()) { helper.fail("Generator accepted invalid fuel"); return; }
             var input = CraftingInput.of(3, 1, List.of(sugar, redstone, invalid));
@@ -1731,7 +1674,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void sneakShearsPickup(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1753,11 +1695,10 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void shiftCraftDamagesShears(GameTestHelper helper) {
         var player = helper.makeMockServerPlayerInLevel();
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
-        var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), ResourceLocation.fromNamespaceAndPath("woolworks", "copper"));
+        var wool = ModItems.withResource(ModItems.INFUSED_WOOL.get(), Identifier.fromNamespaceAndPath("woolworks", "copper"));
         wool.setCount(3);
         var shears = new ItemStack(Items.SHEARS);
         shears.setDamageValue(shears.getMaxDamage() - 2);
@@ -1774,7 +1715,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void shearsToggleAndOffhandPickup(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1807,7 +1747,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void pickupPreservesPendingEnergy(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1834,7 +1773,6 @@ public final class MachineRecipeGameTests {
         helper.fail("Pending cable energy was not preserved on pickup");
     }
 
-    @GameTest(template = "empty", timeoutTicks = 80)
     public static void passiveThenActiveGeneratorPush(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1868,7 +1806,6 @@ public final class MachineRecipeGameTests {
         });
     }
 
-    @GameTest(template = "empty")
     public static void fullInventoryCablePickup(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1891,7 +1828,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void creativeCablePickup(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
@@ -1910,7 +1846,6 @@ public final class MachineRecipeGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
     public static void droppedCablePreservesPendingEnergy(GameTestHelper helper) {
         var level = helper.getLevel();
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
