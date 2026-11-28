@@ -10,14 +10,14 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
 public final class MachineCategories {
-    public static final RecipeType<RecipeHolder<GeneratorFuelRecipe>> FUEL = RecipeType.createRecipeHolderType(ResourceLocation.fromNamespaceAndPath(WoolWorks.MODID, "generator_fuel"));
-    public static final RecipeType<RecipeHolder<WoolExtractionRecipe>> EXTRACTION = RecipeType.createRecipeHolderType(ResourceLocation.fromNamespaceAndPath(WoolWorks.MODID, "wool_extraction"));
+    public static final RecipeType<RecipeHolder<GeneratorFuelRecipe>> FUEL = RecipeType.createRecipeHolderType(Identifier.fromNamespaceAndPath(WoolWorks.MODID, "generator_fuel"));
+    public static final RecipeType<RecipeHolder<WoolExtractionRecipe>> EXTRACTION = RecipeType.createRecipeHolderType(Identifier.fromNamespaceAndPath(WoolWorks.MODID, "wool_extraction"));
     private MachineCategories() {}
 
     public static final class Fuel implements IRecipeCategory<RecipeHolder<GeneratorFuelRecipe>> {
@@ -29,7 +29,7 @@ public final class MachineCategories {
         @Override public void setRecipe(IRecipeLayoutBuilder builder, RecipeHolder<GeneratorFuelRecipe> holder, IFocusGroup focuses) {
             builder.addInputSlot(5, 8).addIngredients(holder.value().ingredient());
         }
-        @Override public void draw(RecipeHolder<GeneratorFuelRecipe> holder, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY) {
+        @Override public void draw(RecipeHolder<GeneratorFuelRecipe> holder, IRecipeSlotsView slots, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
             var recipe = holder.value();
             var font = Minecraft.getInstance().font;
             graphics.drawString(font, recipe.burnTicks() + " ticks", 30, 4, 0x404040, false);
@@ -49,7 +49,7 @@ public final class MachineCategories {
             var level = Minecraft.getInstance().level;
             if (level != null) builder.addOutputSlot(125, 8).addItemStack(holder.value().getResultItem(level.registryAccess()).copy());
         }
-        @Override public void draw(RecipeHolder<WoolExtractionRecipe> holder, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY) {
+        @Override public void draw(RecipeHolder<WoolExtractionRecipe> holder, IRecipeSlotsView slots, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
             var recipe = holder.value();
             var font = Minecraft.getInstance().font;
             graphics.drawString(font, recipe.duration() + " ticks", 30, 4, 0x404040, false);
