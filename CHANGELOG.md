@@ -2,7 +2,13 @@
 
 All notable changes to Wool Works will be documented in this file.
 
-## [Unreleased]
+## [1.0.1]
+
+Bugfix release for Minecraft 1.21.1 (NeoForge).
+
+### Fixed
+
+- Added the missing pickaxe mining tag to the Wool Generator, Wool Extractor and Wool Worker so they can be harvested with a pickaxe in survival.
 
 ## [1.0.0]
 
